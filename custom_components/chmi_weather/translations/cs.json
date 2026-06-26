@@ -1,0 +1,66 @@
+{
+  "title": "CHMI Weather",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Stanice CHMI Weather",
+        "description": "Nastaveni meteorologicke stanice z CHMI OpenData.",
+        "data": {
+          "station_name": "Nazev stanice",
+          "station_id": "WSI / ID stanice",
+          "latitude": "Zemepisna sirka",
+          "longitude": "Zemepisna delka"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nelze se pripojit k endpointu CHMI OpenData.",
+      "no_station_id": "ID stanice je povinne.",
+      "no_data": "Endpoint nevratil zadne pouzitelne hodnoty mereni.",
+      "unknown": "Neocekavana chyba pri overeni stanice."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Moznosti CHMI Weather",
+        "data": {
+          "update_interval_minutes": "Interval aktualizace v minutach",
+          "diagnostic_sensors": "Zapnout diagnosticke senzory",
+          "forecast_source": "Zdroj predpovedi"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Teplota"
+      },
+      "humidity": {
+        "name": "Vlhkost"
+      },
+      "pressure": {
+        "name": "Tlak"
+      },
+      "precipitation_10m": {
+        "name": "Srazky 10m"
+      },
+      "wind_speed": {
+        "name": "Rychlost vetru"
+      },
+      "wind_gust": {
+        "name": "Naraz vetru"
+      },
+      "wind_direction": {
+        "name": "Smer vetru"
+      },
+      "last_update": {
+        "name": "Posledni aktualizace"
+      }
+    }
+  }
+}

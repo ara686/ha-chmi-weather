@@ -1,0 +1,66 @@
+{
+  "title": "CHMI Weather",
+  "config": {
+    "step": {
+      "user": {
+        "title": "CHMI Weather station",
+        "description": "Configure a CHMI OpenData weather station.",
+        "data": {
+          "station_name": "Station name",
+          "station_id": "WSI / station ID",
+          "latitude": "Latitude",
+          "longitude": "Longitude"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the CHMI OpenData endpoint.",
+      "no_station_id": "Station ID is required.",
+      "no_data": "The endpoint did not return any usable observation values.",
+      "unknown": "Unexpected error while validating the station."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "CHMI Weather options",
+        "data": {
+          "update_interval_minutes": "Update interval in minutes",
+          "diagnostic_sensors": "Enable diagnostic sensors",
+          "forecast_source": "Forecast source"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Temperature"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "pressure": {
+        "name": "Pressure"
+      },
+      "precipitation_10m": {
+        "name": "Precipitation 10m"
+      },
+      "wind_speed": {
+        "name": "Wind speed"
+      },
+      "wind_gust": {
+        "name": "Wind gust"
+      },
+      "wind_direction": {
+        "name": "Wind direction"
+      },
+      "last_update": {
+        "name": "Last update"
+      }
+    }
+  }
+}

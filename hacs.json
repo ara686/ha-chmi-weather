@@ -1,0 +1,6 @@
+{
+  "name": "CHMI Weather",
+  "render_readme": true,
+  "domains": ["weather", "sensor"],
+  "iot_class": "cloud_polling"
+}
