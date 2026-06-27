@@ -88,7 +88,14 @@ present in the official `meta2` file, the integration creates:
 - `sensor.chmi_dobrichovice_wind_speed`
 - `sensor.chmi_dobrichovice_wind_gust`
 - `sensor.chmi_dobrichovice_wind_direction`
-- `sensor.chmi_dobrichovice_last_update`
+- `sensor.chmi_dobrichovice_observation_time`
+- `sensor.chmi_dobrichovice_last_successful_poll`
+
+Existing Home Assistant installations may keep the older entity ID
+`sensor.chmi_dobrichovice_last_update`; the entity unique ID is kept stable, but
+the displayed name is `Observation time`. It shows the timestamp published by
+CHMI for the latest station observation. `Last successful poll` shows when Home
+Assistant last successfully downloaded data from CHMI OpenData.
 
 All entities are attached to one Home Assistant device:
 

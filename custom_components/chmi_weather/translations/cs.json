@@ -64,8 +64,11 @@
       "wind_direction": {
         "name": "Smer vetru"
       },
-      "last_update": {
-        "name": "Posledni aktualizace"
+      "observation_time": {
+        "name": "Cas mereni"
+      },
+      "last_successful_poll": {
+        "name": "Posledni uspesne stazeni"
       }
     }
   }

@@ -26,7 +26,10 @@ async def async_get_config_entry_diagnostics(
     config_entry: ConfigEntry,
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    runtime_data = hass.data.get(DOMAIN, {}).get(config_entry.entry_id)
+    runtime_data = getattr(config_entry, "runtime_data", None)
+    if runtime_data is None:
+        runtime_data = hass.data.get(DOMAIN, {}).get(config_entry.entry_id)
+
     observation = None
     if runtime_data is not None:
         observation = (
@@ -50,6 +53,12 @@ async def async_get_config_entry_diagnostics(
         "last_observed_timestamp": (
             observation.observed_at.isoformat()
             if observation is not None and observation.observed_at is not None
+            else None
+        ),
+        "last_successful_poll_timestamp": (
+            runtime_data.coordinator.last_successful_poll.isoformat()
+            if runtime_data is not None
+            and runtime_data.coordinator.last_successful_poll is not None
             else None
         ),
         "available_elements": (
