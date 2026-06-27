@@ -60,6 +60,39 @@ The GitHub Actions workflow runs:
 - Home Assistant beta/pre-release integration tests,
 - a daily scheduled run to surface new Home Assistant compatibility issues.
 
+## Branch and Release Workflow
+
+Development must not happen directly on `main`.
+
+Use this branch flow:
+
+1. Keep `main` as the public HACS/release branch.
+2. Keep `develop` as the integration branch for upcoming work.
+3. Create all feature, fix, documentation, and dependency branches from
+   `develop`.
+4. Open feature/fix PRs from the working branch back into `develop`.
+5. Open release PRs from `develop` into `main`.
+
+Before opening a release PR from `develop` to `main`:
+
+1. Choose the next semantic version.
+2. Update `custom_components/chmi_weather/manifest.json`.
+3. Update `pyproject.toml`.
+4. Update `CHANGELOG.md` with user-visible changes, compatibility notes, and
+   migration notes when needed.
+5. Run unit tests, Home Assistant stable tests, and Home Assistant beta tests.
+
+After the release PR is merged to `main`:
+
+1. Create a GitHub release and tag using the same version as the integration
+   manifest.
+2. Use GitHub generated release notes and review them before publishing.
+3. Confirm the release notes include the right user-visible changes,
+   compatibility notes, dependency updates, and breaking changes.
+4. Confirm HACS can see the new version from the public repository.
+
+Dependabot is configured to open dependency PRs against `develop`, not `main`.
+
 ## Public Release Checklist
 
 Before making the repository public or publishing a release:
