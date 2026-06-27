@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.3
 
 - Select the shortest CHMI OpenData observation interval advertised by station
   `meta2` metadata instead of assuming every station should use `10m` files.
@@ -9,8 +9,7 @@
   best available interval after reload.
 - Added diagnostics for advertised observation interval, configured update
   interval, and effective update interval.
-- Compatibility: unit and Home Assistant integration checks are expected before
-  release.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
 - Migration: no user action required; station capabilities are refreshed during
   setup.
 - Breaking changes: none.
