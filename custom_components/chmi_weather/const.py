@@ -3,9 +3,11 @@
 DOMAIN = "chmi_weather"
 NAME = "CHMI Weather"
 
-MANUFACTURER = "\u010cHM\u00da"
+MANUFACTURER = "\u010cHM\u00da OpenData"
 MODEL = "OpenData weather station"
-ATTRIBUTION = "Data provided by CHMI OpenData"
+ATTRIBUTION = (
+    "Data source: Czech Hydrometeorological Institute (CHMI) OpenData, CC BY 4.0"
+)
 
 DEFAULT_STATION_NAME = "Dobrichovice"
 DEFAULT_STATION_ID = "0-203-0-11521"

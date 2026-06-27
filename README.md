@@ -153,8 +153,10 @@ guarantee. See `DISCLAIMER.md` for project risk and support limitations.
 
 CHMI OpenData is a third-party data source. CHMI states that its open data may be
 used free of charge when respecting the Creative Commons Attribution 4.0
-International license (CC BY 4.0). See `NOTICE.md` for data attribution and
-third-party notices.
+International license (CC BY 4.0). Runtime entities expose CHMI OpenData
+attribution, and fixture data is documented separately in
+`tests/fixtures/README.md`. See `NOTICE.md` for data attribution and third-party
+notices.
 
 ## Roadmap
 

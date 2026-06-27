@@ -5,7 +5,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
-from custom_components.chmi_weather.const import CONF_STATION_ID, CONF_STATION_NAME
+from custom_components.chmi_weather.const import (
+    ATTRIBUTION,
+    CONF_STATION_ID,
+    CONF_STATION_NAME,
+)
 from custom_components.chmi_weather.models import ChmiObservation
 from custom_components.chmi_weather.weather import (
     ChmiWeatherEntity,
@@ -46,6 +50,7 @@ def test_weather_entity_returns_properties() -> None:
     assert entity.native_wind_gust_speed == 2.9
     assert entity.wind_bearing == 222.0
     assert entity.condition == "partlycloudy"
+    assert entity._attr_attribution == ATTRIBUTION
     assert entity.device_info["name"] == "CHMI Dobrichovice"
 
 

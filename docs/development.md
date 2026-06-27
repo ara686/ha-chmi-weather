@@ -72,7 +72,9 @@ Before making the repository public or publishing a release:
 3. Run the unit, Home Assistant stable, and Home Assistant beta test commands.
 4. Confirm `custom_components/chmi_weather/manifest.json` still has `domain`,
    `documentation`, `issue_tracker`, `codeowners`, `name`, and `version`.
-5. Check GitHub Actions logs because public repository visibility also makes
+5. Confirm the GitHub repository has a short description and relevant topics for
+   HACS discoverability.
+6. Check GitHub Actions logs because public repository visibility also makes
    existing public-facing repository activity and CI logs easier to inspect.
 
 ## Workflow
