@@ -21,14 +21,15 @@ from .const import (
     CONF_FORECAST_SOURCE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
+    CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_SENSORS,
     DEFAULT_FORECAST_SOURCE,
+    DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DEFAULT_STATION_SELECTION_LIMIT,
-    DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
 )
 from .models import ChmiNearestStation
@@ -95,7 +96,9 @@ class ChmiWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         title=f"CHMI {data[CONF_STATION_NAME]}",
                         data=data,
                         options={
-                            CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_MINUTES,
+                            CONF_UPDATE_INTERVAL: _data_observation_interval_minutes(
+                                data
+                            ),
                             CONF_DIAGNOSTIC_SENSORS: DEFAULT_DIAGNOSTIC_SENSORS,
                             CONF_FORECAST_SOURCE: DEFAULT_FORECAST_SOURCE,
                         },
@@ -128,21 +131,39 @@ class ChmiWeatherOptionsFlow(config_entries.OptionsFlow):
         user_input: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Manage integration options."""
+        observation_interval_minutes = _entry_observation_interval_minutes(
+            self._config_entry
+        )
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            options = dict(user_input)
+            options[CONF_UPDATE_INTERVAL] = max(
+                1,
+                min(
+                    int(options[CONF_UPDATE_INTERVAL]),
+                    observation_interval_minutes,
+                ),
+            )
+            return self.async_create_entry(title="", data=options)
 
         options = self._config_entry.options
+        default_update_interval = max(
+            1,
+            min(
+                int(options.get(CONF_UPDATE_INTERVAL, observation_interval_minutes)),
+                observation_interval_minutes,
+            ),
+        )
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Required(
                         CONF_UPDATE_INTERVAL,
-                        default=options.get(
-                            CONF_UPDATE_INTERVAL,
-                            DEFAULT_UPDATE_INTERVAL_MINUTES,
-                        ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=1440)),
+                        default=default_update_interval,
+                    ): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(min=1, max=observation_interval_minutes),
+                    ),
                     vol.Required(
                         CONF_DIAGNOSTIC_SENSORS,
                         default=options.get(
@@ -303,9 +324,15 @@ async def _validate_and_enrich_user_input(
         pass
     else:
         enriched_data[CONF_SUPPORTED_ELEMENTS] = list(capabilities.supported_elements)
+        enriched_data[CONF_OBSERVATION_INTERVAL_MINUTES] = (
+            capabilities.observation_interval_minutes
+        )
 
     try:
-        observation = await client.async_get_current_observations(data[CONF_STATION_ID])
+        observation = await client.async_get_current_observations(
+            data[CONF_STATION_ID],
+            interval_minutes=_data_observation_interval_minutes(enriched_data),
+        )
     except ChmiApiConnectionError:
         errors["base"] = "cannot_connect"
     except ChmiApiDataError:
@@ -317,3 +344,21 @@ async def _validate_and_enrich_user_input(
             errors["base"] = "no_data"
 
     return enriched_data, errors
+
+
+def _data_observation_interval_minutes(data: dict[str, Any]) -> int:
+    return max(
+        1,
+        int(
+            data.get(
+                CONF_OBSERVATION_INTERVAL_MINUTES,
+                DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+            )
+        ),
+    )
+
+
+def _entry_observation_interval_minutes(
+    config_entry: config_entries.ConfigEntry,
+) -> int:
+    return _data_observation_interval_minutes(dict(config_entry.data))

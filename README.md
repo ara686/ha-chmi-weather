@@ -7,9 +7,9 @@
 > emergency, operational, or compliance decisions.
 
 CHMI Weather is a Home Assistant custom integration for weather station data from
-ČHMÚ OpenData. The MVP reads current 10-minute observations for one configured
-station, creates a standard `weather` entity, and can expose diagnostic sensors
-for the raw measured values.
+ČHMÚ OpenData. The MVP reads current observations for one configured station at
+the shortest interval advertised by official CHMI metadata, creates a standard
+`weather` entity, and can expose diagnostic sensors for the raw measured values.
 
 The integration uses official ČHMÚ OpenData JSON endpoints only. It does not
 scrape `chmi.cz` HTML pages.
@@ -33,7 +33,8 @@ Dobřichovice is the reference station used by fixtures and manual test scripts:
 - WSI / station ID: `0-203-0-11521`
 - Latitude: `49.9335`
 - Longitude: `14.2759`
-- Current data endpoint pattern:
+- Best advertised observation interval: `10M`
+- Current data endpoint pattern for the selected interval:
   `https://opendata.chmi.cz/meteorology/climate/now/data/10m-0-203-0-11521-YYYYMMDD.json`
 
 `YYYYMMDD` is selected from the current UTC day. If today's file is missing or
@@ -74,7 +75,16 @@ Assistant has no configured location, the coordinate fields are not prefilled. I
 then validates that the OpenData endpoint is reachable and at least one usable
 observation value can be parsed. Supported diagnostic sensors are selected from
 the official OpenData `meta2` file for the station, so Home Assistant only
-exposes values the station advertises for 10-minute observations.
+exposes values the station advertises for the selected observation interval. The
+same metadata is used to select the shortest available observation interval for
+the station. Current CHMI metadata commonly advertises `10M` and `1H`; when both
+are available, the integration uses `10M`.
+
+The update interval option is capped by the selected station observation
+interval. For example, if a station advertises `10M` data and an older config
+entry still has `60` minutes saved, the coordinator polls every 10 minutes. This
+affects new Home Assistant history from the next polling cycles onward; it does
+not retroactively fill missing history.
 
 ## Entities
 
@@ -112,6 +122,9 @@ All entities are attached to one Home Assistant device:
 - The weather condition is best-effort: rain in the last 10 minutes maps to
   `rainy`; otherwise it maps to `partlycloudy`.
 - Data quality and freshness depend on the ČHMÚ OpenData endpoint.
+- Home Assistant history only records data after the integration polls
+  successfully; CHMI data already missed by an older polling configuration is
+  not backfilled.
 - The Dobřichovice `meta2` metadata currently does not advertise pressure
   element `P`, so the pressure diagnostic sensor is not created for this station.
 

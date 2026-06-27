@@ -11,9 +11,10 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import ChmiApiClient, ChmiApiError
 from .const import (
+    CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_UPDATE_INTERVAL,
-    DEFAULT_UPDATE_INTERVAL_MINUTES,
+    DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DOMAIN,
 )
 from .models import ChmiObservation
@@ -35,12 +36,28 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
         self.client = client
         self.last_observation: ChmiObservation | None = None
         self.last_successful_poll: datetime | None = None
+        self.observation_interval_minutes = max(
+            1,
+            int(
+                config_entry.data.get(
+                    CONF_OBSERVATION_INTERVAL_MINUTES,
+                    DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+                )
+            ),
+        )
 
-        update_interval_minutes = int(
+        configured_update_interval_minutes = int(
             config_entry.options.get(
                 CONF_UPDATE_INTERVAL,
-                DEFAULT_UPDATE_INTERVAL_MINUTES,
+                self.observation_interval_minutes,
             )
+        )
+        self.update_interval_minutes = max(
+            1,
+            min(
+                configured_update_interval_minutes,
+                self.observation_interval_minutes,
+            ),
         )
 
         super().__init__(
@@ -48,7 +65,7 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             _LOGGER,
             name=f"{DOMAIN}_{config_entry.data[CONF_STATION_ID]}",
             config_entry=config_entry,
-            update_interval=timedelta(minutes=update_interval_minutes),
+            update_interval=timedelta(minutes=self.update_interval_minutes),
             always_update=True,
         )
 
@@ -56,7 +73,10 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
         """Fetch the latest observation from CHMI OpenData."""
         station_id = self.config_entry.data[CONF_STATION_ID]
         try:
-            observation = await self.client.async_get_current_observations(station_id)
+            observation = await self.client.async_get_current_observations(
+                station_id,
+                interval_minutes=self.observation_interval_minutes,
+            )
         except ChmiApiError as err:
             raise UpdateFailed(f"Failed to update CHMI observations: {err}") from err
         except Exception as err:

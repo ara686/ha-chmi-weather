@@ -37,8 +37,13 @@ https://opendata.chmi.cz/meteorology/climate/now/data
 File pattern:
 
 ```text
-10m-{station_id}-{YYYYMMDD}.json
+{interval_prefix}-{station_id}-{YYYYMMDD}.json
 ```
+
+The interval prefix is selected from official `meta2` metadata. Known current
+prefixes are `10m` for `OBS_TYPE` / `SCHEDULE` value `10M` and `1h` for `1H`.
+The parser selects the shortest advertised interval for the station and falls
+back to longer intervals when no shorter interval is advertised.
 
 `YYYYMMDD` is calculated from the current UTC day. If today's file is missing or
 does not contain usable rows, the API client tries yesterday's UTC file.
@@ -89,7 +94,8 @@ entered GPS coordinates and then stores the selected WSI, station name, and
 coordinates.
 
 `meta2` contains station element metadata. The integration uses it to determine
-which 10-minute diagnostic sensors should be created for the station.
+which diagnostic sensors should be created for the station and which current
+observation interval should be used.
 
 Observed header:
 
@@ -97,9 +103,11 @@ Observed header:
 OBS_TYPE,WSI,EG_EL_ABBREVIATION,NAME,UN_DESCRIPTION,HEIGHT,SCHEDULE
 ```
 
-Only `OBS_TYPE` value `10M` is used for the current observation MVP. For the
-Dobřichovice fixture, wind is advertised through `D`, `F`, and `Fmax`, while
-pressure `P` is not advertised.
+The current observation MVP selects the shortest usable `OBS_TYPE` / `SCHEDULE`
+value for each station. The Dobřichovice fixture advertises both `10M` and `1H`,
+so the integration uses `10M` and the `10m-*` data files. For the Dobřichovice
+fixture, wind is advertised through `D`, `F`, and `Fmax`, while pressure `P` is
+not advertised for the selected interval.
 
 ## Element mapping
 
