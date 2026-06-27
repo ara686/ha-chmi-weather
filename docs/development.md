@@ -22,6 +22,17 @@ ruff format --check .
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest
 ```
 
+Run the security checks for published integration code:
+
+```bash
+bandit -r custom_components/chmi_weather
+pip-audit --local --skip-editable --progress-spinner off
+```
+
+Run dependency audit in a clean environment with only `.[dev]` installed when
+you need to distinguish project dependencies from Home Assistant test harness
+dependencies.
+
 ## Home Assistant compatibility tests
 
 The fast unit tests in `tests/` use local stubs so parser and entity behavior can
@@ -105,9 +116,11 @@ Before making the repository public or publishing a release:
 3. Run the unit, Home Assistant stable, and Home Assistant beta test commands.
 4. Confirm `custom_components/chmi_weather/manifest.json` still has `domain`,
    `documentation`, `issue_tracker`, `codeowners`, `name`, and `version`.
-5. Confirm the GitHub repository has a short description and relevant topics for
+5. Run Bandit and pip-audit for the published integration code and clean dev
+   dependency set.
+6. Confirm the GitHub repository has a short description and relevant topics for
    HACS discoverability.
-6. Check GitHub Actions logs because public repository visibility also makes
+7. Check GitHub Actions logs because public repository visibility also makes
    existing public-facing repository activity and CI logs easier to inspect.
 
 ## Workflow

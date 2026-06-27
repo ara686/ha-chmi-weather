@@ -158,6 +158,8 @@ attribution, and fixture data is documented separately in
 `tests/fixtures/README.md`. See `NOTICE.md` for data attribution and third-party
 notices.
 
+See `SECURITY.md` for vulnerability reporting and dependency audit scope.
+
 ## Roadmap
 
 1. Current observations MVP.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import re
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -30,6 +31,7 @@ from .models import (
 )
 
 DEFAULT_TIMEOUT_SECONDS = 20
+STATION_ID_PATTERN = re.compile(r"^[A-Za-z0-9-]+$")
 
 
 class ChmiApiError(Exception):
@@ -96,7 +98,8 @@ class ChmiApiClient:
 
     def _build_current_url(self, station_id: str, day: date) -> str:
         """Build a CHMI current observation URL."""
-        return f"{self._base_url}/10m-{station_id.strip()}-{day:%Y%m%d}.json"
+        normalized_station_id = _normalize_station_id(station_id)
+        return f"{self._base_url}/10m-{normalized_station_id}-{day:%Y%m%d}.json"
 
     async def async_get_station_metadata(
         self,
@@ -233,6 +236,7 @@ def parse_current_observations(
     station_id: str,
 ) -> ChmiObservation:
     """Parse a CHMI DataCollection payload into the latest valid observation."""
+    normalized_station_id = _normalize_station_id(station_id)
     values = _extract_values(payload)
     if not values:
         raise ChmiApiDataError("CHMI response does not contain observation rows")
@@ -246,7 +250,7 @@ def parse_current_observations(
             continue
 
         station = _row_value(row, indices, "STATION", 0)
-        if station_id and str(station).strip() != station_id:
+        if str(station).strip() != normalized_station_id:
             continue
 
         element = _row_value(row, indices, "ELEMENT", 1)
@@ -268,7 +272,7 @@ def parse_current_observations(
             selected[element_code] = (observed_at, value)
 
     observation = ChmiObservation(
-        station_id=station_id,
+        station_id=normalized_station_id,
         observed_at=_latest_observed_at(selected),
         temperature=_selected_value(selected, ELEMENT_TEMPERATURE),
         humidity=_selected_value(selected, ELEMENT_HUMIDITY),
@@ -291,7 +295,7 @@ def parse_station_metadata(
     station_id: str,
 ) -> ChmiStationMetadata:
     """Parse CHMI meta1 station metadata for one station."""
-    normalized_station_id = station_id.strip()
+    normalized_station_id = _normalize_station_id(station_id)
     for station in parse_station_metadata_list(payload):
         if station.station_id == normalized_station_id:
             return station
@@ -363,7 +367,7 @@ def parse_station_capabilities(
         raise ChmiApiDataError("CHMI capability metadata does not contain rows")
 
     indices = _extract_header_indices(payload)
-    normalized_station_id = station_id.strip()
+    normalized_station_id = _normalize_station_id(station_id)
     normalized_observation_type = observation_type.strip().upper()
     supported_elements: set[str] = set()
 
@@ -396,6 +400,13 @@ def parse_station_capabilities(
         station_id=normalized_station_id,
         supported_elements=tuple(sorted(supported_elements)),
     )
+
+
+def _normalize_station_id(station_id: str) -> str:
+    normalized = station_id.strip()
+    if not normalized or STATION_ID_PATTERN.fullmatch(normalized) is None:
+        raise ChmiApiDataError("Invalid CHMI station ID")
+    return normalized
 
 
 def has_usable_observation(observation: ChmiObservation) -> bool:
