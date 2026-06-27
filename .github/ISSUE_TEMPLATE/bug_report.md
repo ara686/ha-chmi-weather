@@ -17,8 +17,10 @@ Describe what you expected.
 ## Environment
 
 - Home Assistant version:
+- Home Assistant channel: stable / beta / dev
 - CHMI Weather version:
 - Station ID:
+- I understand this integration is experimental and not recommended for production use: yes / no
 
 ## Logs
 

@@ -1,7 +1,7 @@
 {
   "domain": "chmi_weather",
   "name": "CHMI Weather",
-  "codeowners": [],
+  "codeowners": ["@ara686"],
   "config_flow": true,
   "documentation": "https://github.com/ara686/ha-chmi-weather",
   "integration_type": "service",

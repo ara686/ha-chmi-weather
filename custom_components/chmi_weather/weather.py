@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from homeassistant.components.weather import WeatherEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfPrecipitationDepth,
     UnitOfPressure,
@@ -14,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import ChmiWeatherConfigEntry
 from .const import (
     ATTRIBUTION,
     CONF_STATION_ID,
@@ -28,11 +28,11 @@ from .models import ChmiObservation
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: ChmiWeatherConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up CHMI Weather weather entities."""
-    runtime_data = hass.data[DOMAIN][entry.entry_id]
+    runtime_data = entry.runtime_data
     async_add_entities([ChmiWeatherEntity(runtime_data.coordinator, entry)])
 
 
@@ -40,19 +40,20 @@ class ChmiWeatherEntity(CoordinatorEntity[ChmiDataUpdateCoordinator], WeatherEnt
     """Weather entity for one CHMI OpenData station."""
 
     _attr_attribution = ATTRIBUTION
+    _attr_has_entity_name = True
+    _attr_name = None
     _attr_should_poll = False
 
     def __init__(
         self,
         coordinator: ChmiDataUpdateCoordinator,
-        entry: ConfigEntry,
+        entry: ChmiWeatherConfigEntry,
     ) -> None:
         """Initialize the weather entity."""
         super().__init__(coordinator)
         self._entry = entry
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data[CONF_STATION_NAME]
-        self._attr_name = f"CHMI {self._station_name}"
         self._attr_unique_id = f"{self._station_id}_weather"
 
     @property

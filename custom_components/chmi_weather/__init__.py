@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import ChmiApiClient, ChmiApiError
-from .const import CONF_STATION_ID, CONF_SUPPORTED_ELEMENTS, DOMAIN
+from .const import CONF_STATION_ID, CONF_SUPPORTED_ELEMENTS
 from .coordinator import ChmiDataUpdateCoordinator
 
 PLATFORMS: tuple[Platform, ...] = (Platform.WEATHER, Platform.SENSOR)
@@ -24,7 +24,13 @@ class ChmiWeatherRuntimeData:
     coordinator: ChmiDataUpdateCoordinator
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+type ChmiWeatherConfigEntry = ConfigEntry[ChmiWeatherRuntimeData]
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ChmiWeatherConfigEntry,
+) -> bool:
     """Set up CHMI Weather from a config entry."""
     session = async_get_clientsession(hass)
     client = ChmiApiClient(session)
@@ -32,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = ChmiDataUpdateCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = ChmiWeatherRuntimeData(
+    entry.runtime_data = ChmiWeatherRuntimeData(
         client=client,
         coordinator=coordinator,
     )
@@ -42,15 +48,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant,
+    entry: ChmiWeatherConfigEntry,
+) -> bool:
     """Unload a CHMI Weather config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
-    return unload_ok
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def async_reload_entry(
+    hass: HomeAssistant,
+    entry: ChmiWeatherConfigEntry,
+) -> None:
     """Reload a CHMI Weather config entry."""
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)

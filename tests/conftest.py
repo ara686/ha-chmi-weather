@@ -22,6 +22,10 @@ homeassistant.config_entries = config_entries
 class ConfigEntry(SimpleNamespace):
     """ConfigEntry stub."""
 
+    @classmethod
+    def __class_getitem__(cls, item: Any) -> type[ConfigEntry]:
+        return cls
+
 
 class ConfigFlow:
     """ConfigFlow stub."""
@@ -225,6 +229,25 @@ class SensorEntity:
     """SensorEntity stub."""
 
 
+class SensorEntityDescription:
+    """SensorEntityDescription stub."""
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__()
+
+    def __init__(self, **kwargs: Any) -> None:
+        self.device_class = None
+        self.last_reset = None
+        self.native_unit_of_measurement = None
+        self.options = None
+        self.state_class = None
+        self.suggested_display_precision = None
+        self.suggested_unit_of_measurement = None
+        self.unit_of_measurement = None
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
 class SensorDeviceClass:
     """Sensor device classes."""
 
@@ -245,6 +268,7 @@ class SensorStateClass:
 
 
 sensor.SensorEntity = SensorEntity
+sensor.SensorEntityDescription = SensorEntityDescription
 sensor.SensorDeviceClass = SensorDeviceClass
 sensor.SensorStateClass = SensorStateClass
 

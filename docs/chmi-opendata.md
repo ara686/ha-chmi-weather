@@ -3,6 +3,23 @@
 The MVP uses official CHMI OpenData current observation files, not HTML station
 pages.
 
+## Data License and Attribution
+
+CHMI OpenData is a third-party data source. CHMI states that its open data may
+be used free of charge when respecting the Creative Commons Attribution 4.0
+International license (CC BY 4.0).
+
+Use this attribution when publishing examples, screenshots, derived data, or
+other output that includes CHMI OpenData:
+
+```text
+Data source: Czech Hydrometeorological Institute (CHMI) OpenData, CC BY 4.0.
+```
+
+This integration stores and displays data from CHMI OpenData but does not make
+any claim that the upstream data is complete, current, correct, or suitable for
+production, safety, emergency, or compliance use.
+
 ## Current observations
 
 Base URL:

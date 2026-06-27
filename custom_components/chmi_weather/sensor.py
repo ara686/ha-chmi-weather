@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Collection
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     DEGREE,
     PERCENTAGE,
@@ -26,6 +25,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import ChmiWeatherConfigEntry
 from .const import (
     CONF_DIAGNOSTIC_SENSORS,
     CONF_STATION_ID,
@@ -47,18 +47,11 @@ from .coordinator import ChmiDataUpdateCoordinator
 from .models import ChmiObservation
 
 
-@dataclass(frozen=True, slots=True)
-class ChmiSensorDescription:
+class ChmiSensorDescription(SensorEntityDescription, frozen_or_thawed=True):
     """Description for a CHMI sensor entity."""
 
-    key: str
-    name: str
-    translation_key: str
     value_fn: Callable[[ChmiObservation], Any]
     required_elements: tuple[str, ...] = ()
-    native_unit_of_measurement: str | None = None
-    device_class: SensorDeviceClass | None = None
-    state_class: SensorStateClass | None = None
 
 
 SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
@@ -144,7 +137,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: ChmiWeatherConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up CHMI Weather sensor entities."""
@@ -152,7 +145,7 @@ async def async_setup_entry(
         async_add_entities([])
         return
 
-    runtime_data = hass.data[DOMAIN][entry.entry_id]
+    runtime_data = entry.runtime_data
     descriptions = supported_sensor_descriptions(
         entry.data.get(CONF_SUPPORTED_ELEMENTS)
     )
@@ -191,12 +184,13 @@ class ChmiSensorEntity(CoordinatorEntity[ChmiDataUpdateCoordinator], SensorEntit
     """Sensor entity backed by the shared CHMI coordinator."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_has_entity_name = True
     _attr_should_poll = False
 
     def __init__(
         self,
         coordinator: ChmiDataUpdateCoordinator,
-        entry: ConfigEntry,
+        entry: ChmiWeatherConfigEntry,
         description: ChmiSensorDescription,
     ) -> None:
         """Initialize the sensor."""
@@ -204,7 +198,7 @@ class ChmiSensorEntity(CoordinatorEntity[ChmiDataUpdateCoordinator], SensorEntit
         self.entity_description = description
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data[CONF_STATION_NAME]
-        self._attr_name = f"CHMI {self._station_name} {description.name}"
+        self._attr_name = description.name
         self._attr_unique_id = f"{self._station_id}_{description.key}"
         self._attr_translation_key = description.translation_key
 

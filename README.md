@@ -1,5 +1,11 @@
 # CHMI Weather
 
+> [!WARNING]
+> CHMI Weather is experimental software under active development. It is not
+> recommended for production use. Install and use it at your own risk, and do
+> not rely on it for safety-critical, life-critical, property protection,
+> emergency, operational, or compliance decisions.
+
 CHMI Weather is a Home Assistant custom integration for weather station data from
 ČHMÚ OpenData. The MVP reads current 10-minute observations for one configured
 station, creates a standard `weather` entity, and can expose diagnostic sensors
@@ -8,9 +14,20 @@ for the raw measured values.
 The integration uses official ČHMÚ OpenData JSON endpoints only. It does not
 scrape `chmi.cz` HTML pages.
 
+This project is not affiliated with, endorsed by, certified by, or supported by
+CHMI, Home Assistant, HACS, Nabu Casa, or the Open Home Foundation.
+
 ## Status
 
-This repository currently contains an MVP for the Dobřichovice station:
+This repository currently contains a development-preview MVP for current CHMI
+OpenData station observations. APIs, entity behavior, configuration flow,
+diagnostics, and supported station data may change without notice until the
+project reaches a stable release.
+
+During setup, Home Assistant suggests nearby stations from the official CHMI
+station metadata and stores the selected WSI / station ID.
+
+Dobřichovice is the reference station used by fixtures and manual test scripts:
 
 - Station name: `Dobřichovice`
 - WSI / station ID: `0-203-0-11521`
@@ -23,6 +40,10 @@ This repository currently contains an MVP for the Dobřichovice station:
 empty, the integration tries yesterday's UTC file.
 
 ## Installation with HACS
+
+Use HACS installation only for testing and development systems. For normal HACS
+custom repository installation, the GitHub repository must be public or otherwise
+accessible to the Home Assistant instance through a configured GitHub account.
 
 1. Open HACS in Home Assistant.
 2. Open the three-dot menu and choose Custom repositories.
@@ -57,7 +78,8 @@ exposes values the station advertises for 10-minute observations.
 
 ## Entities
 
-For Dobřichovice the MVP creates:
+For Dobřichovice, when the station advertises the supported elements currently
+present in the official `meta2` file, the integration creates:
 
 - `weather.chmi_dobrichovice`
 - `sensor.chmi_dobrichovice_temperature`
@@ -77,6 +99,7 @@ All entities are attached to one Home Assistant device:
 
 ## Known MVP limitations
 
+- The integration is under active development and is not production-ready.
 - The MVP uses only current measured data from one station.
 - Forecast is not implemented yet.
 - The weather condition is best-effort: rain in the last 10 minutes maps to
@@ -109,11 +132,29 @@ Run checks:
 ```bash
 ruff check .
 ruff format --check .
-pytest
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest
+pytest tests_ha -o asyncio_mode=auto
 ```
+
+`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest` runs fast parser and entity unit tests
+without loading Home Assistant's pytest plugin into the stub test environment.
+`pytest tests_ha -o asyncio_mode=auto` loads the custom integration through Home
+Assistant test fixtures and should be run before deployment-oriented changes.
 
 See `docs/development.md` and `AGENTS.md` before changing parser or Home
 Assistant integration behavior.
+
+## License and Notices
+
+The source code is licensed under the MIT License. See `LICENSE`.
+
+This software is provided as-is, without warranty, and without a support
+guarantee. See `DISCLAIMER.md` for project risk and support limitations.
+
+CHMI OpenData is a third-party data source. CHMI states that its open data may be
+used free of charge when respecting the Creative Commons Attribution 4.0
+International license (CC BY 4.0). See `NOTICE.md` for data attribution and
+third-party notices.
 
 ## Roadmap
 

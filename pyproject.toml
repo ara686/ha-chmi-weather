@@ -3,14 +3,22 @@ name = "ha-chmi-weather"
 version = "0.1.0"
 description = "Home Assistant custom integration for CHMI OpenData weather stations."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = []
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
+  "pytest-asyncio>=1.0",
   "ruff>=0.12.0"
 ]
+ha-stable = [
+  "pytest-homeassistant-custom-component==0.13.340"
+]
+
+[tool.setuptools.packages.find]
+include = ["custom_components*"]
+exclude = ["tests*", "tests_ha*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
