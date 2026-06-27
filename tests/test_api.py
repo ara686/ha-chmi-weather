@@ -97,6 +97,13 @@ def test_api_client_builds_current_url() -> None:
     )
 
 
+def test_api_client_rejects_unsafe_station_id() -> None:
+    client = ChmiApiClient(session=object())
+
+    with pytest.raises(ChmiApiDataError):
+        client._build_current_url("../0-203-0-11521?x=1", date(2026, 6, 26))
+
+
 def test_parser_reads_station_metadata() -> None:
     metadata = parse_station_metadata(_metadata_fixture(), STATION_ID)
 
