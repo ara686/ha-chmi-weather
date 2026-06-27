@@ -15,6 +15,7 @@ from custom_components.chmi_weather.const import (
     CONF_FORECAST_SOURCE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
+    CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
@@ -47,10 +48,18 @@ class FakeChmiApiClient:
         return ChmiStationCapabilities(
             station_id=station_id,
             supported_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
+            observation_type="10M",
+            observation_interval_minutes=10,
         )
 
-    async def async_get_current_observations(self, station_id: str) -> ChmiObservation:
+    async def async_get_current_observations(
+        self,
+        station_id: str,
+        *,
+        interval_minutes: int,
+    ) -> ChmiObservation:
         """Return a current observation."""
+        assert interval_minutes == 10
         return ChmiObservation(
             station_id=station_id,
             observed_at=datetime(2026, 6, 26, 8, 50, tzinfo=UTC),
@@ -98,6 +107,7 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
 
     assert entry.runtime_data.coordinator.data is not None
     assert entry.data[CONF_SUPPORTED_ELEMENTS] == ["D", "F", "Fmax", "H", "SRA10M", "T"]
+    assert entry.data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
     assert weather_state is not None
     assert weather_state.state == "partlycloudy"
     assert temperature_state is not None

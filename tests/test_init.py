@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 from custom_components.chmi_weather import _async_refresh_station_capabilities
 from custom_components.chmi_weather.const import (
+    CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_SUPPORTED_ELEMENTS,
 )
@@ -34,6 +35,8 @@ class FakeClient:
         return ChmiStationCapabilities(
             station_id=station_id,
             supported_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
+            observation_type="10M",
+            observation_interval_minutes=10,
         )
 
 
@@ -59,3 +62,4 @@ def test_refresh_station_capabilities_updates_entry_data() -> None:
         "SRA10M",
         "T",
     ]
+    assert entry.data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10

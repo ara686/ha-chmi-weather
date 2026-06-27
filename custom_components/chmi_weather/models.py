@@ -41,6 +41,8 @@ class ChmiStationCapabilities:
 
     station_id: str
     supported_elements: tuple[str, ...]
+    observation_type: str
+    observation_interval_minutes: int
 
 
 @dataclass(slots=True)
