@@ -64,8 +64,11 @@
       "wind_direction": {
         "name": "Wind direction"
       },
-      "last_update": {
-        "name": "Last update"
+      "observation_time": {
+        "name": "Observation time"
+      },
+      "last_successful_poll": {
+        "name": "Last successful poll"
       }
     }
   }

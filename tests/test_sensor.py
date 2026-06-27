@@ -32,7 +32,11 @@ def _observation() -> ChmiObservation:
 def _entity(key: str) -> ChmiSensorEntity:
     description = next(item for item in SENSOR_DESCRIPTIONS if item.key == key)
     return ChmiSensorEntity(
-        coordinator=SimpleNamespace(data=_observation(), last_observation=None),
+        coordinator=SimpleNamespace(
+            data=_observation(),
+            last_observation=None,
+            last_successful_poll=datetime(2026, 6, 26, 8, 51, tzinfo=UTC),
+        ),
         entry=SimpleNamespace(
             data={
                 CONF_STATION_ID: "0-203-0-11521",
@@ -57,6 +61,15 @@ def test_last_update_sensor_native_value() -> None:
     entity = _entity("last_update")
 
     assert entity.native_value == datetime(2026, 6, 26, 8, 50, tzinfo=UTC)
+    assert entity.entity_description.translation_key == "observation_time"
+    assert entity.device_class == "timestamp"
+    assert entity.state_class is None
+
+
+def test_last_successful_poll_sensor_native_value() -> None:
+    entity = _entity("last_successful_poll")
+
+    assert entity.native_value == datetime(2026, 6, 26, 8, 51, tzinfo=UTC)
     assert entity.device_class == "timestamp"
     assert entity.state_class is None
 
@@ -72,6 +85,7 @@ def test_supported_sensor_descriptions_follow_station_capabilities() -> None:
     assert "wind_gust" in keys
     assert "wind_direction" in keys
     assert "last_update" in keys
+    assert "last_successful_poll" in keys
     assert "pressure" not in keys
 
 

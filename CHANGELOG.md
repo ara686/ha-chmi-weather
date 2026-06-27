@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Renamed the displayed `last_update` diagnostic sensor to `Observation time`
+  to clarify that it shows the CHMI observation timestamp.
+- Added a `Last successful poll` diagnostic sensor showing when Home Assistant
+  last successfully downloaded CHMI OpenData.
+- Updated coordinator notifications so diagnostic poll timestamps refresh even
+  when CHMI returns the same observation values.
+
 ## 0.1.1
 
 - Added `SECURITY.md` with vulnerability reporting guidance and dependency audit
