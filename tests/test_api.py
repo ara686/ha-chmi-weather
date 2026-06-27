@@ -12,15 +12,31 @@ import pytest
 from custom_components.chmi_weather.api import (
     ChmiApiClient,
     ChmiApiDataError,
+    nearest_stations,
     parse_current_observations,
+    parse_station_capabilities,
+    parse_station_metadata,
+    parse_station_metadata_list,
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current.json"
+METADATA_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_meta1_current.json"
+CAPABILITIES_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_meta2_current.json"
+)
 STATION_ID = "0-203-0-11521"
 
 
 def _fixture() -> dict:
     return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _metadata_fixture() -> dict:
+    return json.loads(METADATA_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _capabilities_fixture() -> dict:
+    return json.loads(CAPABILITIES_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _values(payload: dict) -> list:
@@ -78,4 +94,81 @@ def test_api_client_builds_current_url() -> None:
     assert (
         url == "https://opendata.chmi.cz/meteorology/climate/now/data/"
         "10m-0-203-0-11521-20260626.json"
+    )
+
+
+def test_parser_reads_station_metadata() -> None:
+    metadata = parse_station_metadata(_metadata_fixture(), STATION_ID)
+
+    assert metadata.station_id == STATION_ID
+    assert metadata.gh_id == "P1DOBE01"
+    assert metadata.full_name == "Dobřichovice"
+    assert metadata.latitude == 49.9335
+    assert metadata.longitude == 14.27585
+    assert metadata.elevation == 205.0
+    assert metadata.begin_date is not None
+    assert metadata.begin_date.isoformat() == "1999-04-01T00:00:00+00:00"
+
+
+def test_parser_reads_station_metadata_list() -> None:
+    stations = parse_station_metadata_list(_metadata_fixture())
+    station_ids = {station.station_id for station in stations}
+
+    assert STATION_ID in station_ids
+    assert "0-203-0-11603" in station_ids
+
+
+def test_parser_rejects_missing_station_metadata() -> None:
+    with pytest.raises(ChmiApiDataError):
+        parse_station_metadata(_metadata_fixture(), "0-203-0-missing")
+
+
+def test_api_client_builds_station_metadata_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_station_metadata_url(date(2026, 6, 26))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
+        "meta1-20260626.json"
+    )
+
+
+def test_nearest_stations_sorts_by_distance() -> None:
+    stations = parse_station_metadata_list(_metadata_fixture())
+
+    nearest = nearest_stations(stations, 49.9335, 14.2759, limit=2)
+
+    assert [item.station.station_id for item in nearest] == [
+        "0-203-0-11521",
+        "0-203-0-11603",
+    ]
+    assert nearest[0].distance_km < 0.1
+
+
+def test_parser_reads_station_capabilities() -> None:
+    capabilities = parse_station_capabilities(_capabilities_fixture(), STATION_ID)
+
+    assert capabilities.station_id == STATION_ID
+    assert "D" in capabilities.supported_elements
+    assert "F" in capabilities.supported_elements
+    assert "Fmax" in capabilities.supported_elements
+    assert "H" in capabilities.supported_elements
+    assert "P" not in capabilities.supported_elements
+    assert "SRA1H" not in capabilities.supported_elements
+
+
+def test_parser_rejects_missing_station_capabilities() -> None:
+    with pytest.raises(ChmiApiDataError):
+        parse_station_capabilities(_capabilities_fixture(), "0-203-0-missing")
+
+
+def test_api_client_builds_station_capabilities_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_station_capabilities_url(date(2026, 6, 26))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
+        "meta2-20260626.json"
     )

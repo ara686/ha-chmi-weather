@@ -1,0 +1,33 @@
+{
+  "zaznamID": "6afa56ae-3efc-3e58-4bbb-7cdc282eef2a",
+  "datovyZdrojID": "meteorologie",
+  "datovyTokID": "Open.Data.Metadata",
+  "datumVytvoreni": "2026-06-26T00:01:00.473Z",
+  "verzeDat": "1.0",
+  "data": {
+    "type": "DataCollection",
+    "data": {
+      "header": "WSI,GH_ID,FULL_NAME,GEOGR1,GEOGR2,ELEVATION,BEGIN_DATE",
+      "values": [
+        [
+          "0-203-0-11521",
+          "P1DOBE01",
+          "Dobřichovice",
+          14.27585,
+          49.9335,
+          205.0,
+          "1999-04-01T00:00:00Z"
+        ],
+        [
+          "0-203-0-11603",
+          "U2LIBC01",
+          "Liberec",
+          15.02389,
+          50.76972,
+          397.72,
+          "1880-01-01T00:00:00Z"
+        ]
+      ]
+    }
+  }
+}

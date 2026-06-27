@@ -36,6 +36,48 @@ Rows are arrays:
 
 The parser selects the latest valid numeric value per mapped element.
 
+## Station metadata
+
+Base URL:
+
+```text
+https://opendata.chmi.cz/meteorology/climate/now/metadata
+```
+
+File pattern:
+
+```text
+meta1-{YYYYMMDD}.json
+```
+
+`meta1` contains station-level metadata. The integration uses the current UTC
+day and falls back to yesterday when the current metadata file is not available
+yet.
+
+Observed header:
+
+```text
+WSI,GH_ID,FULL_NAME,GEOGR1,GEOGR2,ELEVATION,BEGIN_DATE
+```
+
+`GEOGR1` is longitude and `GEOGR2` is latitude. During config flow validation,
+the integration uses this official metadata to offer the nearest stations for
+entered GPS coordinates and then stores the selected WSI, station name, and
+coordinates.
+
+`meta2` contains station element metadata. The integration uses it to determine
+which 10-minute diagnostic sensors should be created for the station.
+
+Observed header:
+
+```text
+OBS_TYPE,WSI,EG_EL_ABBREVIATION,NAME,UN_DESCRIPTION,HEIGHT,SCHEDULE
+```
+
+Only `OBS_TYPE` value `10M` is used for the current observation MVP. For the
+Dobřichovice fixture, wind is advertised through `D`, `F`, and `Fmax`, while
+pressure `P` is not advertised.
+
 ## Element mapping
 
 | Field | CHMI element |
@@ -48,6 +90,6 @@ The parser selects the latest valid numeric value per mapped element.
 | Wind gust | `Fmax` |
 | Wind direction | `D` |
 
-The sampled Dobrichovice current file contains `TPM` but not `P`. The MVP keeps
-the requested `P` pressure mapping and reports pressure as unavailable until a
-confirmed pressure mapping is added.
+The sampled Dobřichovice metadata contains `TPM` but not `P`. The MVP keeps the
+requested `P` pressure mapping but does not create the pressure diagnostic sensor
+unless the station advertises `P` in `meta2`.

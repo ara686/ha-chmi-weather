@@ -3,19 +3,25 @@
   "config": {
     "step": {
       "user": {
-        "title": "Stanice CHMI Weather",
-        "description": "Nastaveni meteorologicke stanice z CHMI OpenData.",
+        "title": "Poloha stanice",
+        "description": "Pouzijte polohu Home Assistantu nebo zadejte GPS souradnice pro vyhledani nejblizsich stanic CHMI OpenData.",
         "data": {
-          "station_name": "Nazev stanice",
-          "station_id": "WSI / ID stanice",
           "latitude": "Zemepisna sirka",
           "longitude": "Zemepisna delka"
+        }
+      },
+      "station": {
+        "title": "Stanice CHMI Weather",
+        "description": "Vyberte nejblizsi stanici CHMI OpenData.",
+        "data": {
+          "station_id": "Stanice"
         }
       }
     },
     "error": {
       "cannot_connect": "Nelze se pripojit k endpointu CHMI OpenData.",
       "no_station_id": "ID stanice je povinne.",
+      "no_stations": "Pro tyto souradnice nebyly nalezeny zadne stanice CHMI.",
       "no_data": "Endpoint nevratil zadne pouzitelne hodnoty mereni.",
       "unknown": "Neocekavana chyba pri overeni stanice."
     },

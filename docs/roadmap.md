@@ -11,9 +11,13 @@
 
 ## Phase 2 - Station selection
 
-- Document how to discover CHMI station IDs from official OpenData metadata.
+- Use official `meta1` OpenData metadata to normalize station names and
+  coordinates.
+- Offer nearest stations by distance from user-entered GPS coordinates.
+- Use official `meta2` OpenData metadata to select diagnostic sensors supported
+  by the station.
 - Add validation tests for additional station examples.
-- Consider a station picker if a suitable official metadata endpoint is stable.
+- Consider using Home Assistant location defaults more prominently in the picker.
 
 ## Phase 3 - Forecast
 

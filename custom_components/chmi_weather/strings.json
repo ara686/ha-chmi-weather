@@ -3,19 +3,25 @@
   "config": {
     "step": {
       "user": {
-        "title": "CHMI Weather station",
-        "description": "Configure a CHMI OpenData weather station.",
+        "title": "Station location",
+        "description": "Use the Home Assistant location or enter GPS coordinates to find nearby CHMI OpenData stations.",
         "data": {
-          "station_name": "Station name",
-          "station_id": "WSI / station ID",
           "latitude": "Latitude",
           "longitude": "Longitude"
+        }
+      },
+      "station": {
+        "title": "CHMI Weather station",
+        "description": "Select the nearest CHMI OpenData station to use.",
+        "data": {
+          "station_id": "Station"
         }
       }
     },
     "error": {
       "cannot_connect": "Cannot connect to the CHMI OpenData endpoint.",
       "no_station_id": "Station ID is required.",
+      "no_stations": "No CHMI stations were found for these coordinates.",
       "no_data": "The endpoint did not return any usable observation values.",
       "unknown": "Unexpected error while validating the station."
     },

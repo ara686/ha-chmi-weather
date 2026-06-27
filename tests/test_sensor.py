@@ -7,7 +7,11 @@ from types import SimpleNamespace
 
 from custom_components.chmi_weather.const import CONF_STATION_ID, CONF_STATION_NAME
 from custom_components.chmi_weather.models import ChmiObservation
-from custom_components.chmi_weather.sensor import SENSOR_DESCRIPTIONS, ChmiSensorEntity
+from custom_components.chmi_weather.sensor import (
+    SENSOR_DESCRIPTIONS,
+    ChmiSensorEntity,
+    supported_sensor_descriptions,
+)
 
 
 def _observation() -> ChmiObservation:
@@ -55,3 +59,21 @@ def test_last_update_sensor_native_value() -> None:
     assert entity.native_value == datetime(2026, 6, 26, 8, 50, tzinfo=UTC)
     assert entity.device_class == "timestamp"
     assert entity.state_class is None
+
+
+def test_supported_sensor_descriptions_follow_station_capabilities() -> None:
+    descriptions = supported_sensor_descriptions({"D", "F", "Fmax", "H", "SRA10M", "T"})
+    keys = {description.key for description in descriptions}
+
+    assert "temperature" in keys
+    assert "humidity" in keys
+    assert "precipitation_10m" in keys
+    assert "wind_speed" in keys
+    assert "wind_gust" in keys
+    assert "wind_direction" in keys
+    assert "last_update" in keys
+    assert "pressure" not in keys
+
+
+def test_supported_sensor_descriptions_keep_legacy_entries() -> None:
+    assert supported_sensor_descriptions(None) == SENSOR_DESCRIPTIONS

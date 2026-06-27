@@ -10,9 +10,9 @@ scrape `chmi.cz` HTML pages.
 
 ## Status
 
-This repository currently contains an MVP for the Dobrichovice station:
+This repository currently contains an MVP for the Dobřichovice station:
 
-- Station name: `Dobrichovice`
+- Station name: `Dobřichovice`
 - WSI / station ID: `0-203-0-11521`
 - Latitude: `49.9335`
 - Longitude: `14.2759`
@@ -42,24 +42,26 @@ empty, the integration tries yesterday's UTC file.
 1. Go to Settings -> Devices & services.
 2. Choose Add integration.
 3. Search for CHMI Weather.
-4. Use the Dobrichovice defaults or enter another CHMI station:
-   - Station name
-   - WSI / station ID
-   - Latitude
-   - Longitude
+4. Use the Home Assistant location if it is configured, or enter GPS
+   coordinates for the target location.
+5. Select one of the nearest CHMI OpenData stations offered by the integration.
 
-During setup the integration validates that the station ID is not empty, the
-OpenData endpoint is reachable, and at least one usable observation value can be
-parsed.
+During setup the integration loads official `meta1` station metadata, sorts the
+nearest stations by distance from the configured Home Assistant location or
+entered GPS coordinates, and stores the selected WSI / station ID. If Home
+Assistant has no configured location, the coordinate fields are not prefilled. It
+then validates that the OpenData endpoint is reachable and at least one usable
+observation value can be parsed. Supported diagnostic sensors are selected from
+the official OpenData `meta2` file for the station, so Home Assistant only
+exposes values the station advertises for 10-minute observations.
 
 ## Entities
 
-For Dobrichovice the MVP creates:
+For Dobřichovice the MVP creates:
 
 - `weather.chmi_dobrichovice`
 - `sensor.chmi_dobrichovice_temperature`
 - `sensor.chmi_dobrichovice_humidity`
-- `sensor.chmi_dobrichovice_pressure`
 - `sensor.chmi_dobrichovice_precipitation_10m`
 - `sensor.chmi_dobrichovice_wind_speed`
 - `sensor.chmi_dobrichovice_wind_gust`
@@ -70,7 +72,7 @@ All entities are attached to one Home Assistant device:
 
 - Manufacturer: ČHMÚ
 - Model: OpenData weather station
-- Name: CHMI Dobrichovice
+- Name: CHMI Dobřichovice
 - Identifier: `("chmi_weather", "0-203-0-11521")`
 
 ## Known MVP limitations
@@ -80,8 +82,8 @@ All entities are attached to one Home Assistant device:
 - The weather condition is best-effort: rain in the last 10 minutes maps to
   `rainy`; otherwise it maps to `partlycloudy`.
 - Data quality and freshness depend on the ČHMÚ OpenData endpoint.
-- The Dobrichovice current JSON currently does not include pressure element `P`,
-  so pressure can be unavailable for this station.
+- The Dobřichovice `meta2` metadata currently does not advertise pressure
+  element `P`, so the pressure diagnostic sensor is not created for this station.
 
 ## Troubleshooting
 

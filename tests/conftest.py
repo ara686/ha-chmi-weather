@@ -251,6 +251,16 @@ sensor.SensorStateClass = SensorStateClass
 voluptuous = _module("voluptuous")
 
 
+class Marker(str):
+    """Voluptuous marker stub preserving defaults."""
+
+    def __new__(cls, key: str, default: Any = None) -> Marker:
+        """Create a marker."""
+        marker = str.__new__(cls, key)
+        marker.default = default
+        return marker
+
+
 class Schema:
     """Voluptuous Schema stub."""
 
@@ -262,7 +272,7 @@ class Schema:
 
 
 def _marker(key: str, default: Any = None) -> str:
-    return key
+    return Marker(key, default)
 
 
 def _identity(*args: Any, **kwargs: Any) -> Any:

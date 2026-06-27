@@ -13,6 +13,7 @@ from .const import (
     CONF_LONGITUDE,
     CONF_STATION_ID,
     CONF_STATION_NAME,
+    CONF_SUPPORTED_ELEMENTS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_SENSORS,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
@@ -45,6 +46,7 @@ async def async_get_config_entry_diagnostics(
             CONF_DIAGNOSTIC_SENSORS,
             DEFAULT_DIAGNOSTIC_SENSORS,
         ),
+        "supported_elements": list(config_entry.data.get(CONF_SUPPORTED_ELEMENTS, [])),
         "last_observed_timestamp": (
             observation.observed_at.isoformat()
             if observation is not None and observation.observed_at is not None
