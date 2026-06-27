@@ -128,7 +128,8 @@ Before making the repository public or publishing a release:
 1. Update or add a fixture when the CHMI OpenData shape changes.
 2. Update parser tests before changing parser behavior.
 3. Keep `api.py` independent from Home Assistant entities.
-4. Keep polling inside `ChmiDataUpdateCoordinator`.
+4. Keep station interval selection in the parser/client layer and poll through
+   `ChmiDataUpdateCoordinator`.
 5. Keep weather and sensor properties memory-only.
 
 ## Manual Home Assistant check

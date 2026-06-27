@@ -97,6 +97,21 @@ def test_api_client_builds_current_url() -> None:
     )
 
 
+def test_api_client_builds_hourly_current_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_current_url(
+        STATION_ID,
+        date(2026, 6, 26),
+        interval_minutes=60,
+    )
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/now/data/"
+        "1h-0-203-0-11521-20260626.json"
+    )
+
+
 def test_api_client_rejects_unsafe_station_id() -> None:
     client = ChmiApiClient(session=object())
 
@@ -157,12 +172,27 @@ def test_parser_reads_station_capabilities() -> None:
     capabilities = parse_station_capabilities(_capabilities_fixture(), STATION_ID)
 
     assert capabilities.station_id == STATION_ID
+    assert capabilities.observation_type == "10M"
+    assert capabilities.observation_interval_minutes == 10
     assert "D" in capabilities.supported_elements
     assert "F" in capabilities.supported_elements
     assert "Fmax" in capabilities.supported_elements
     assert "H" in capabilities.supported_elements
     assert "P" not in capabilities.supported_elements
     assert "SRA1H" not in capabilities.supported_elements
+
+
+def test_parser_falls_back_to_hourly_station_capabilities() -> None:
+    payload = deepcopy(_capabilities_fixture())
+    payload["data"]["data"]["values"] = [
+        row for row in _values(payload) if row[1] != STATION_ID or row[0] == "1H"
+    ]
+
+    capabilities = parse_station_capabilities(payload, STATION_ID)
+
+    assert capabilities.observation_type == "1H"
+    assert capabilities.observation_interval_minutes == 60
+    assert capabilities.supported_elements == ("SRA1H",)
 
 
 def test_parser_rejects_missing_station_capabilities() -> None:

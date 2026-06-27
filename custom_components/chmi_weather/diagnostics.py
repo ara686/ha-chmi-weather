@@ -11,12 +11,13 @@ from .const import (
     CONF_DIAGNOSTIC_SENSORS,
     CONF_LATITUDE,
     CONF_LONGITUDE,
+    CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_SENSORS,
-    DEFAULT_UPDATE_INTERVAL_MINUTES,
+    DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DOMAIN,
 )
 
@@ -35,16 +36,44 @@ async def async_get_config_entry_diagnostics(
         observation = (
             runtime_data.coordinator.last_observation or runtime_data.coordinator.data
         )
+    observation_interval_minutes = max(
+        1,
+        int(
+            config_entry.data.get(
+                CONF_OBSERVATION_INTERVAL_MINUTES,
+                DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+            )
+        ),
+    )
+    configured_update_interval_minutes = int(
+        config_entry.options.get(
+            CONF_UPDATE_INTERVAL,
+            observation_interval_minutes,
+        )
+    )
+    effective_update_interval_minutes = max(
+        1,
+        min(
+            configured_update_interval_minutes,
+            observation_interval_minutes,
+        ),
+    )
+    if runtime_data is not None:
+        effective_update_interval_minutes = getattr(
+            runtime_data.coordinator,
+            "update_interval_minutes",
+            effective_update_interval_minutes,
+        )
 
     return {
         "station_id": config_entry.data.get(CONF_STATION_ID),
         "station_name": config_entry.data.get(CONF_STATION_NAME),
         "latitude": config_entry.data.get(CONF_LATITUDE),
         "longitude": config_entry.data.get(CONF_LONGITUDE),
-        "update_interval_minutes": config_entry.options.get(
-            CONF_UPDATE_INTERVAL,
-            DEFAULT_UPDATE_INTERVAL_MINUTES,
-        ),
+        "observation_interval_minutes": observation_interval_minutes,
+        "configured_update_interval_minutes": configured_update_interval_minutes,
+        "effective_update_interval_minutes": effective_update_interval_minutes,
+        "update_interval_minutes": effective_update_interval_minutes,
         "diagnostic_sensors_enabled": config_entry.options.get(
             CONF_DIAGNOSTIC_SENSORS,
             DEFAULT_DIAGNOSTIC_SENSORS,

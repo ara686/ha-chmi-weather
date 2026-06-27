@@ -7,7 +7,9 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from custom_components.chmi_weather.const import (
+    CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
+    CONF_UPDATE_INTERVAL,
     DOMAIN,
 )
 from custom_components.chmi_weather.diagnostics import (
@@ -39,8 +41,11 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
     )
     config_entry = SimpleNamespace(
         entry_id="entry-id",
-        data={CONF_STATION_ID: "0-203-0-11521"},
-        options={},
+        data={
+            CONF_STATION_ID: "0-203-0-11521",
+            CONF_OBSERVATION_INTERVAL_MINUTES: 10,
+        },
+        options={CONF_UPDATE_INTERVAL: 60},
         runtime_data=SimpleNamespace(coordinator=coordinator),
     )
     hass = SimpleNamespace(data={DOMAIN: {}})
@@ -49,3 +54,6 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
 
     assert diagnostics["last_observed_timestamp"] == "2026-06-26T08:50:00+00:00"
     assert diagnostics["last_successful_poll_timestamp"] == "2026-06-26T08:51:00+00:00"
+    assert diagnostics["observation_interval_minutes"] == 10
+    assert diagnostics["configured_update_interval_minutes"] == 60
+    assert diagnostics["effective_update_interval_minutes"] == 10

@@ -9,13 +9,14 @@ from types import SimpleNamespace
 from custom_components.chmi_weather import config_flow
 from custom_components.chmi_weather.const import (
     CONF_DIAGNOSTIC_SENSORS,
+    CONF_FORECAST_SOURCE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
+    CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
     CONF_UPDATE_INTERVAL,
-    DEFAULT_UPDATE_INTERVAL_MINUTES,
 )
 from custom_components.chmi_weather.models import (
     ChmiNearestStation,
@@ -50,6 +51,7 @@ def test_config_flow_creates_entry(monkeypatch) -> None:
                 CONF_LATITUDE: 49.9335,
                 CONF_LONGITUDE: 14.27585,
                 CONF_SUPPORTED_ELEMENTS: ["D", "F", "Fmax", "H", "SRA10M", "T"],
+                CONF_OBSERVATION_INTERVAL_MINUTES: 10,
             }
         )
         return data, {}
@@ -93,7 +95,8 @@ def test_config_flow_creates_entry(monkeypatch) -> None:
         "SRA10M",
         "T",
     ]
-    assert result["options"][CONF_UPDATE_INTERVAL] == DEFAULT_UPDATE_INTERVAL_MINUTES
+    assert result["data"][CONF_OBSERVATION_INTERVAL_MINUTES] == 10
+    assert result["options"][CONF_UPDATE_INTERVAL] == 10
     assert result["options"][CONF_DIAGNOSTIC_SENSORS] is True
 
 
@@ -209,9 +212,17 @@ def test_config_flow_enriches_station_from_metadata(monkeypatch) -> None:
             return ChmiStationCapabilities(
                 station_id=station_id,
                 supported_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
+                observation_type="10M",
+                observation_interval_minutes=10,
             )
 
-        async def async_get_current_observations(self, station_id: str):
+        async def async_get_current_observations(
+            self,
+            station_id: str,
+            *,
+            interval_minutes: int,
+        ):
+            assert interval_minutes == 10
             return ChmiObservation(
                 station_id=station_id,
                 observed_at=datetime(2026, 6, 26, 8, 50, tzinfo=UTC),
@@ -243,3 +254,31 @@ def test_config_flow_enriches_station_from_metadata(monkeypatch) -> None:
     assert data[CONF_LATITUDE] == 49.9335
     assert data[CONF_LONGITUDE] == 14.27585
     assert data[CONF_SUPPORTED_ELEMENTS] == ["D", "F", "Fmax", "H", "SRA10M", "T"]
+    assert data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
+
+
+def test_options_flow_limits_update_interval_to_observation_interval() -> None:
+    flow = config_flow.ChmiWeatherOptionsFlow(
+        SimpleNamespace(
+            data={CONF_OBSERVATION_INTERVAL_MINUTES: 10},
+            options={CONF_UPDATE_INTERVAL: 60},
+        )
+    )
+
+    result = asyncio.run(flow.async_step_init())
+    marker = _schema_marker(result["data_schema"].schema, CONF_UPDATE_INTERVAL)
+
+    assert result["type"] == "form"
+    assert marker.default == 10
+
+    result = asyncio.run(
+        flow.async_step_init(
+            {
+                CONF_UPDATE_INTERVAL: 60,
+                CONF_DIAGNOSTIC_SENSORS: True,
+                CONF_FORECAST_SOURCE: "none",
+            }
+        )
+    )
+
+    assert result["data"][CONF_UPDATE_INTERVAL] == 10

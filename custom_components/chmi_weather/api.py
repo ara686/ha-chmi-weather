@@ -14,6 +14,7 @@ from .const import (
     CHMI_BASE_URL,
     CHMI_ELEMENT_BY_FIELD,
     CHMI_METADATA_BASE_URL,
+    DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     ELEMENT_HUMIDITY,
     ELEMENT_PRECIPITATION_10M,
     ELEMENT_PRESSURE,
@@ -32,6 +33,7 @@ from .models import (
 
 DEFAULT_TIMEOUT_SECONDS = 20
 STATION_ID_PATTERN = re.compile(r"^[A-Za-z0-9-]+$")
+OBSERVATION_TYPE_PATTERN = re.compile(r"^(\d+)([DHM])$")
 
 
 class ChmiApiError(Exception):
@@ -70,6 +72,8 @@ class ChmiApiClient:
     async def async_get_current_observations(
         self,
         station_id: str,
+        *,
+        interval_minutes: int = DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     ) -> ChmiObservation:
         """Return current observations for a station, falling back to yesterday."""
         today = datetime.now(UTC).date()
@@ -80,6 +84,7 @@ class ChmiApiClient:
                 return await self.async_get_current_observations_for_date(
                     station_id,
                     day,
+                    interval_minutes=interval_minutes,
                 )
             except (ChmiApiNotFoundError, ChmiApiDataError) as err:
                 last_error = err
@@ -90,16 +95,31 @@ class ChmiApiClient:
         self,
         station_id: str,
         day: date,
+        *,
+        interval_minutes: int = DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     ) -> ChmiObservation:
         """Return observations for one UTC date."""
-        url = self._build_current_url(station_id, day)
+        url = self._build_current_url(
+            station_id,
+            day,
+            interval_minutes=interval_minutes,
+        )
         payload = await self._async_get_json(url)
         return parse_current_observations(payload, station_id)
 
-    def _build_current_url(self, station_id: str, day: date) -> str:
+    def _build_current_url(
+        self,
+        station_id: str,
+        day: date,
+        *,
+        interval_minutes: int = DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+    ) -> str:
         """Build a CHMI current observation URL."""
         normalized_station_id = _normalize_station_id(station_id)
-        return f"{self._base_url}/10m-{normalized_station_id}-{day:%Y%m%d}.json"
+        file_prefix = _data_file_prefix(interval_minutes)
+        return (
+            f"{self._base_url}/{file_prefix}-{normalized_station_id}-{day:%Y%m%d}.json"
+        )
 
     async def async_get_station_metadata(
         self,
@@ -168,7 +188,7 @@ class ChmiApiClient:
         self,
         station_id: str,
     ) -> ChmiStationCapabilities:
-        """Return measurable 10-minute elements for a station."""
+        """Return measurable elements and best observation interval for a station."""
         today = datetime.now(UTC).date()
         last_error: ChmiApiError | None = None
 
@@ -359,7 +379,7 @@ def parse_station_capabilities(
     payload: Mapping[str, Any],
     station_id: str,
     *,
-    observation_type: str = "10M",
+    observation_type: str | None = None,
 ) -> ChmiStationCapabilities:
     """Parse CHMI meta2 measurable element metadata for one station."""
     values = _extract_values(payload)
@@ -368,8 +388,13 @@ def parse_station_capabilities(
 
     indices = _extract_header_indices(payload)
     normalized_station_id = _normalize_station_id(station_id)
-    normalized_observation_type = observation_type.strip().upper()
+    normalized_observation_type = (
+        observation_type.strip().upper() if observation_type else None
+    )
+    selected_observation_type: str | None = None
+    selected_interval_minutes: int | None = None
     supported_elements: set[str] = set()
+    station_rows: list[Sequence[Any]] = []
 
     for row in values:
         if not _is_row(row):
@@ -379,12 +404,39 @@ def parse_station_capabilities(
         if str(row_station_id).strip() != normalized_station_id:
             continue
 
-        row_observation_type = _as_str(_row_value(row, indices, "OBS_TYPE", 0))
-        if (
-            normalized_observation_type
-            and row_observation_type is not None
-            and row_observation_type.upper() != normalized_observation_type
-        ):
+        station_rows.append(row)
+
+    if not station_rows:
+        raise ChmiApiDataError(
+            "CHMI capability metadata does not contain supported elements"
+        )
+
+    if normalized_observation_type is not None:
+        selected_observation_type = normalized_observation_type
+        selected_interval_minutes = _observation_type_interval_minutes(
+            selected_observation_type
+        )
+    else:
+        for row in station_rows:
+            row_observation_type = _row_observation_type(row, indices)
+            row_interval_minutes = _observation_type_interval_minutes(
+                row_observation_type
+            )
+            if row_observation_type is None or row_interval_minutes is None:
+                continue
+            if (
+                selected_interval_minutes is None
+                or row_interval_minutes < selected_interval_minutes
+            ):
+                selected_observation_type = row_observation_type
+                selected_interval_minutes = row_interval_minutes
+
+    if selected_observation_type is None or selected_interval_minutes is None:
+        raise ChmiApiDataError("CHMI capability metadata has no usable interval")
+
+    for row in station_rows:
+        row_observation_type = _row_observation_type(row, indices)
+        if row_observation_type != selected_observation_type:
             continue
 
         element = _as_str(_row_value(row, indices, "EG_EL_ABBREVIATION", 2))
@@ -399,6 +451,8 @@ def parse_station_capabilities(
     return ChmiStationCapabilities(
         station_id=normalized_station_id,
         supported_elements=tuple(sorted(supported_elements)),
+        observation_type=selected_observation_type,
+        observation_interval_minutes=selected_interval_minutes,
     )
 
 
@@ -407,6 +461,49 @@ def _normalize_station_id(station_id: str) -> str:
     if not normalized or STATION_ID_PATTERN.fullmatch(normalized) is None:
         raise ChmiApiDataError("Invalid CHMI station ID")
     return normalized
+
+
+def _observation_type_interval_minutes(value: str | None) -> int | None:
+    if value is None:
+        return None
+
+    match = OBSERVATION_TYPE_PATTERN.fullmatch(value.strip().upper())
+    if match is None:
+        return None
+
+    amount = int(match.group(1))
+    unit = match.group(2)
+    if amount <= 0:
+        return None
+    if unit == "M":
+        return amount
+    if unit == "H":
+        return amount * 60
+    return amount * 24 * 60
+
+
+def _data_file_prefix(interval_minutes: int) -> str:
+    if interval_minutes <= 0:
+        raise ChmiApiDataError("Invalid CHMI observation interval")
+    if interval_minutes % (24 * 60) == 0:
+        return f"{interval_minutes // (24 * 60)}d"
+    if interval_minutes % 60 == 0:
+        return f"{interval_minutes // 60}h"
+    return f"{interval_minutes}m"
+
+
+def _row_observation_type(
+    row: Sequence[Any],
+    indices: Mapping[str, int],
+) -> str | None:
+    observation_type = _as_str(_row_value(row, indices, "OBS_TYPE", 0))
+    if observation_type is not None:
+        return observation_type.upper()
+
+    schedule = _as_str(_row_value(row, indices, "SCHEDULE", 6))
+    if schedule is not None:
+        return schedule.upper()
+    return None
 
 
 def has_usable_observation(observation: ChmiObservation) -> bool:

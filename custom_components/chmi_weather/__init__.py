@@ -10,7 +10,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import ChmiApiClient, ChmiApiError
-from .const import CONF_STATION_ID, CONF_SUPPORTED_ELEMENTS
+from .const import (
+    CONF_OBSERVATION_INTERVAL_MINUTES,
+    CONF_STATION_ID,
+    CONF_SUPPORTED_ELEMENTS,
+)
 from .coordinator import ChmiDataUpdateCoordinator
 
 PLATFORMS: tuple[Platform, ...] = (Platform.WEATHER, Platform.SENSOR)
@@ -84,10 +88,20 @@ async def _async_refresh_station_capabilities(
         return
 
     supported_elements = list(capabilities.supported_elements)
-    if entry.data.get(CONF_SUPPORTED_ELEMENTS) == supported_elements:
+    if (
+        entry.data.get(CONF_SUPPORTED_ELEMENTS) == supported_elements
+        and entry.data.get(CONF_OBSERVATION_INTERVAL_MINUTES)
+        == capabilities.observation_interval_minutes
+    ):
         return
 
     hass.config_entries.async_update_entry(
         entry,
-        data={**entry.data, CONF_SUPPORTED_ELEMENTS: supported_elements},
+        data={
+            **entry.data,
+            CONF_SUPPORTED_ELEMENTS: supported_elements,
+            CONF_OBSERVATION_INTERVAL_MINUTES: (
+                capabilities.observation_interval_minutes
+            ),
+        },
     )
