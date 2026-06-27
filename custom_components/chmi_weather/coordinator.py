@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -34,6 +34,7 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
         self.config_entry = config_entry
         self.client = client
         self.last_observation: ChmiObservation | None = None
+        self.last_successful_poll: datetime | None = None
 
         update_interval_minutes = int(
             config_entry.options.get(
@@ -48,7 +49,7 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             name=f"{DOMAIN}_{config_entry.data[CONF_STATION_ID]}",
             config_entry=config_entry,
             update_interval=timedelta(minutes=update_interval_minutes),
-            always_update=False,
+            always_update=True,
         )
 
     async def _async_update_data(self) -> ChmiObservation:
@@ -64,9 +65,11 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             ) from err
 
         self.last_observation = observation
+        self.last_successful_poll = datetime.now(UTC)
         _LOGGER.debug(
-            "Updated CHMI observation for %s at %s",
+            "Updated CHMI observation for %s at %s; poll completed at %s",
             station_id,
             observation.observed_at,
+            self.last_successful_poll,
         )
         return observation

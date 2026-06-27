@@ -50,7 +50,7 @@ from .models import ChmiObservation
 class ChmiSensorDescription(SensorEntityDescription, frozen_or_thawed=True):
     """Description for a CHMI sensor entity."""
 
-    value_fn: Callable[[ChmiObservation], Any]
+    value_fn: Callable[[ChmiDataUpdateCoordinator, ChmiObservation], Any]
     required_elements: tuple[str, ...] = ()
 
 
@@ -59,7 +59,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         key="temperature",
         name="Temperature",
         translation_key="temperature",
-        value_fn=lambda observation: observation.temperature,
+        value_fn=lambda coordinator, observation: observation.temperature,
         required_elements=(ELEMENT_TEMPERATURE,),
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -69,7 +69,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         key="humidity",
         name="Humidity",
         translation_key="humidity",
-        value_fn=lambda observation: observation.humidity,
+        value_fn=lambda coordinator, observation: observation.humidity,
         required_elements=(ELEMENT_HUMIDITY,),
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.HUMIDITY,
@@ -79,7 +79,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         key="pressure",
         name="Pressure",
         translation_key="pressure",
-        value_fn=lambda observation: observation.pressure,
+        value_fn=lambda coordinator, observation: observation.pressure,
         required_elements=(ELEMENT_PRESSURE,),
         native_unit_of_measurement=UnitOfPressure.HPA,
         device_class=SensorDeviceClass.PRESSURE,
@@ -89,7 +89,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         key="precipitation_10m",
         name="Precipitation 10m",
         translation_key="precipitation_10m",
-        value_fn=lambda observation: observation.precipitation_10m,
+        value_fn=lambda coordinator, observation: observation.precipitation_10m,
         required_elements=(ELEMENT_PRECIPITATION_10M,),
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
@@ -99,7 +99,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         key="wind_speed",
         name="Wind speed",
         translation_key="wind_speed",
-        value_fn=lambda observation: observation.wind_speed,
+        value_fn=lambda coordinator, observation: observation.wind_speed,
         required_elements=(ELEMENT_WIND_SPEED,),
         native_unit_of_measurement=UnitOfSpeed.METERS_PER_SECOND,
         device_class=SensorDeviceClass.WIND_SPEED,
@@ -109,7 +109,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         key="wind_gust",
         name="Wind gust",
         translation_key="wind_gust",
-        value_fn=lambda observation: observation.wind_gust,
+        value_fn=lambda coordinator, observation: observation.wind_gust,
         required_elements=(ELEMENT_WIND_GUST,),
         native_unit_of_measurement=UnitOfSpeed.METERS_PER_SECOND,
         device_class=SensorDeviceClass.WIND_SPEED,
@@ -119,7 +119,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         key="wind_direction",
         name="Wind direction",
         translation_key="wind_direction",
-        value_fn=lambda observation: observation.wind_direction,
+        value_fn=lambda coordinator, observation: observation.wind_direction,
         required_elements=(ELEMENT_WIND_DIRECTION,),
         native_unit_of_measurement=DEGREE,
         device_class=SensorDeviceClass.WIND_DIRECTION,
@@ -127,9 +127,16 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
     ),
     ChmiSensorDescription(
         key="last_update",
-        name="Last update",
-        translation_key="last_update",
-        value_fn=lambda observation: observation.observed_at,
+        name="Observation time",
+        translation_key="observation_time",
+        value_fn=lambda coordinator, observation: observation.observed_at,
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    ChmiSensorDescription(
+        key="last_successful_poll",
+        name="Last successful poll",
+        translation_key="last_successful_poll",
+        value_fn=lambda coordinator, observation: coordinator.last_successful_poll,
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
 )
@@ -215,7 +222,7 @@ class ChmiSensorEntity(CoordinatorEntity[ChmiDataUpdateCoordinator], SensorEntit
     @property
     def native_value(self) -> float | datetime | None:
         """Return the sensor value."""
-        return self.entity_description.value_fn(self.observation)
+        return self.entity_description.value_fn(self.coordinator, self.observation)
 
     @property
     def native_unit_of_measurement(self) -> str | None:
