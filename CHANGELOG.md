@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.2
 
 - Renamed the displayed `last_update` diagnostic sensor to `Observation time`
   to clarify that it shows the CHMI observation timestamp.
@@ -8,6 +8,9 @@
   last successfully downloaded CHMI OpenData.
 - Updated coordinator notifications so diagnostic poll timestamps refresh even
   when CHMI returns the same observation values.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
+- Migration: no user action required.
+- Breaking changes: none.
 
 ## 0.1.1
 
