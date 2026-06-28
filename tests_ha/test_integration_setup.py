@@ -70,6 +70,8 @@ class FakeChmiApiClient:
             wind_speed=1.3,
             wind_gust=2.9,
             wind_direction=222.0,
+            precipitation_1h=1.2,
+            precipitation_today=4.8,
             available_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
         )
 
@@ -102,6 +104,12 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
 
     weather_state = hass.states.get("weather.chmi_dobrichovice")
     temperature_state = hass.states.get("sensor.chmi_dobrichovice_temperature")
+    precipitation_hour_state = hass.states.get(
+        "sensor.chmi_dobrichovice_precipitation_1h"
+    )
+    precipitation_today_state = hass.states.get(
+        "sensor.chmi_dobrichovice_precipitation_today"
+    )
     wind_speed_state = hass.states.get("sensor.chmi_dobrichovice_wind_speed")
     pressure_state = hass.states.get("sensor.chmi_dobrichovice_pressure")
 
@@ -112,6 +120,10 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     assert weather_state.state == "partlycloudy"
     assert temperature_state is not None
     assert temperature_state.state == "32.7"
+    assert precipitation_hour_state is not None
+    assert precipitation_hour_state.state == "1.2"
+    assert precipitation_today_state is not None
+    assert precipitation_today_state.state == "4.8"
     assert wind_speed_state is not None
     assert wind_speed_state.state == "4.68"
     assert pressure_state is None

@@ -27,6 +27,7 @@ from .const import (
 from .models import (
     ChmiNearestStation,
     ChmiObservation,
+    ChmiPrecipitationSample,
     ChmiStationCapabilities,
     ChmiStationMetadata,
 )
@@ -264,6 +265,7 @@ def parse_current_observations(
     indices = _extract_header_indices(payload)
     selected: dict[str, tuple[datetime | None, float]] = {}
     available_elements: set[str] = set()
+    precipitation_by_timestamp: dict[datetime, float] = {}
 
     for row in values:
         if not _is_row(row):
@@ -287,10 +289,14 @@ def parse_current_observations(
             continue
 
         observed_at = _parse_datetime(_row_value(row, indices, "DT", 2))
+        if element_code == ELEMENT_PRECIPITATION_10M and observed_at is not None:
+            precipitation_by_timestamp[observed_at] = value
+
         current = selected.get(element_code)
         if current is None or _is_newer_or_equal(observed_at, current[0]):
             selected[element_code] = (observed_at, value)
 
+    precipitation_samples = _precipitation_samples(precipitation_by_timestamp)
     observation = ChmiObservation(
         station_id=normalized_station_id,
         observed_at=_latest_observed_at(selected),
@@ -301,6 +307,9 @@ def parse_current_observations(
         wind_speed=_selected_value(selected, ELEMENT_WIND_SPEED),
         wind_gust=_selected_value(selected, ELEMENT_WIND_GUST),
         wind_direction=_selected_value(selected, ELEMENT_WIND_DIRECTION),
+        precipitation_1h=_precipitation_last_hour(precipitation_samples),
+        precipitation_today=_precipitation_total(precipitation_samples),
+        precipitation_samples=precipitation_samples,
         available_elements=tuple(sorted(available_elements)),
     )
 
@@ -665,3 +674,38 @@ def _latest_observed_at(
     if not timestamps:
         return None
     return max(timestamps)
+
+
+def _precipitation_samples(
+    precipitation_by_timestamp: Mapping[datetime, float],
+) -> tuple[ChmiPrecipitationSample, ...]:
+    return tuple(
+        ChmiPrecipitationSample(observed_at=observed_at, amount=amount)
+        for observed_at, amount in sorted(precipitation_by_timestamp.items())
+    )
+
+
+def _precipitation_total(
+    samples: Sequence[ChmiPrecipitationSample],
+) -> float | None:
+    if not samples:
+        return None
+    return round(sum(sample.amount for sample in samples), 3)
+
+
+def _precipitation_last_hour(
+    samples: Sequence[ChmiPrecipitationSample],
+) -> float | None:
+    if not samples:
+        return None
+
+    latest_observed_at = max(sample.observed_at for sample in samples)
+    threshold = latest_observed_at - timedelta(hours=1)
+    return round(
+        sum(
+            sample.amount
+            for sample in samples
+            if threshold < sample.observed_at <= latest_observed_at
+        ),
+        3,
+    )

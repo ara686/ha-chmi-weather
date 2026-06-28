@@ -58,6 +58,35 @@ def test_parser_selects_latest_valid_values() -> None:
     assert "TPM" in observation.available_elements
 
 
+def test_parser_calculates_precipitation_totals() -> None:
+    payload = deepcopy(_fixture())
+    rows = _values(payload)
+    rows.extend(
+        [
+            [STATION_ID, "SRA10M", "2026-06-26T07:50:00Z", 5.0, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-26T08:00:00Z", 1.0, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-26T08:10:00Z", 0.5, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-26T08:50:00Z", 0.2, "", 5.0],
+        ]
+    )
+
+    observation = parse_current_observations(payload, STATION_ID)
+
+    assert observation.precipitation_10m == 0.2
+    assert observation.precipitation_1h == 1.7
+    assert observation.precipitation_today == 6.7
+    assert [
+        (sample.observed_at.isoformat(), sample.amount)
+        for sample in observation.precipitation_samples
+        if sample.amount
+    ] == [
+        ("2026-06-26T07:50:00+00:00", 5.0),
+        ("2026-06-26T08:00:00+00:00", 1.0),
+        ("2026-06-26T08:10:00+00:00", 0.5),
+        ("2026-06-26T08:50:00+00:00", 0.2),
+    ]
+
+
 def test_parser_ignores_none_and_empty_values() -> None:
     payload = _fixture()
     rows = _values(payload)

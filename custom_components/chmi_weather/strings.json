@@ -55,6 +55,12 @@
       "precipitation_10m": {
         "name": "Precipitation 10m"
       },
+      "precipitation_1h": {
+        "name": "Precipitation 1h"
+      },
+      "precipitation_today": {
+        "name": "Precipitation today"
+      },
       "wind_speed": {
         "name": "Wind speed"
       },
