@@ -95,6 +95,8 @@ present in the official `meta2` file, the integration creates:
 - `sensor.chmi_dobrichovice_temperature`
 - `sensor.chmi_dobrichovice_humidity`
 - `sensor.chmi_dobrichovice_precipitation_10m`
+- `sensor.chmi_dobrichovice_precipitation_1h`
+- `sensor.chmi_dobrichovice_precipitation_today`
 - `sensor.chmi_dobrichovice_wind_speed`
 - `sensor.chmi_dobrichovice_wind_gust`
 - `sensor.chmi_dobrichovice_wind_direction`
@@ -106,6 +108,12 @@ Existing Home Assistant installations may keep the older entity ID
 the displayed name is `Observation time`. It shows the timestamp published by
 CHMI for the latest station observation. `Last successful poll` shows when Home
 Assistant last successfully downloaded data from CHMI OpenData.
+
+`Precipitation 10m` is the raw CHMI `SRA10M` interval value. `Precipitation 1h`
+is the sum of the latest hour of available `SRA10M` rows in the selected CHMI
+daily file. `Precipitation today` is the cumulative sum of `SRA10M` rows in the
+current CHMI daily file and uses the `total_increasing` state class so Home
+Assistant can derive calendar rainfall totals with Utility Meter helpers.
 
 All entities are attached to one Home Assistant device:
 
@@ -127,6 +135,25 @@ All entities are attached to one Home Assistant device:
   not backfilled.
 - The Dobřichovice `meta2` metadata currently does not advertise pressure
   element `P`, so the pressure diagnostic sensor is not created for this station.
+- Direct `Precipitation 1h` and `Precipitation today` values are limited to rows
+  available in the selected CHMI daily file. Home Assistant Utility Meter history
+  continues from the states recorded by Home Assistant after the integration is
+  installed.
+
+## Home Assistant statistics
+
+Numeric CHMI Weather sensors expose Home Assistant state classes where the value
+semantics fit long-term statistics. Use native Home Assistant statistics cards or
+Statistics helpers for weather extrema and averages such as daily, weekly, or
+monthly temperature maximums, humidity averages, pressure trends, wind gust
+maximums, and circular wind-direction means.
+
+For rainfall cycles, use `sensor.chmi_dobrichovice_precipitation_today` as the
+source for Home Assistant Utility Meter helpers with `delta_values` left
+disabled. Do not use `sensor.chmi_dobrichovice_precipitation_10m` directly as a
+Utility Meter source; it is a per-observation interval value, not a cumulative
+meter. See `docs/statistics.md` for example hourly, daily, weekly, and monthly
+rainfall helpers.
 
 ## Troubleshooting
 

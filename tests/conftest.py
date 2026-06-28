@@ -265,6 +265,7 @@ class SensorStateClass:
 
     MEASUREMENT = "measurement"
     MEASUREMENT_ANGLE = "measurement_angle"
+    TOTAL_INCREASING = "total_increasing"
 
 
 sensor.SensorEntity = SensorEntity

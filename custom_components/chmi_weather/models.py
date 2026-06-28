@@ -6,6 +6,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 
+@dataclass(slots=True, frozen=True)
+class ChmiPrecipitationSample:
+    """One timestamped CHMI precipitation interval sample."""
+
+    observed_at: datetime
+    amount: float
+
+
 @dataclass(slots=True)
 class ChmiObservation:
     """Normalized current observation for a CHMI weather station."""
@@ -19,6 +27,11 @@ class ChmiObservation:
     wind_speed: float | None
     wind_gust: float | None
     wind_direction: float | None
+    precipitation_1h: float | None = None
+    precipitation_today: float | None = None
+    precipitation_samples: tuple[ChmiPrecipitationSample, ...] = field(
+        default_factory=tuple
+    )
     available_elements: tuple[str, ...] = field(default_factory=tuple)
 
 

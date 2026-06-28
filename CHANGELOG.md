@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- Added `Precipitation 1h` and `Precipitation today` diagnostic sensors derived
+  from official CHMI `SRA10M` current-observation rows.
+- Marked `Precipitation today` as `total_increasing` so Home Assistant Utility
+  Meter helpers can derive hourly, daily, weekly, monthly, or yearly rainfall
+  totals.
+- Documented recommended Home Assistant Statistics and Utility Meter usage for
+  weather extrema, averages, and rainfall totals.
+- Compatibility: expected to be validated with Home Assistant stable and beta
+  test harnesses before release.
+- Migration: no user action required; new rainfall sensors appear for stations
+  that advertise `SRA10M`.
+- Breaking changes: none.
+
 ## 0.1.3
 
 - Select the shortest CHMI OpenData observation interval advertised by station

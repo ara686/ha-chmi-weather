@@ -62,7 +62,10 @@ Rows are arrays:
 ["0-203-0-11521", "T", "2026-06-26T08:50:00Z", 32.7, "", 5.0]
 ```
 
-The parser selects the latest valid numeric value per mapped element.
+The parser selects the latest valid numeric value per mapped element. For
+`SRA10M`, it also keeps timestamped interval samples from the selected daily file
+so the integration can derive one-hour and current-file rainfall totals without
+calling additional CHMI endpoints during every poll.
 
 ## Station metadata
 
@@ -117,6 +120,8 @@ not advertised for the selected interval.
 | Humidity | `H` |
 | Pressure | `P` |
 | Precipitation 10m | `SRA10M` |
+| Precipitation 1h | derived from `SRA10M` |
+| Precipitation today | derived from `SRA10M` |
 | Wind speed | `F` |
 | Wind gust | `Fmax` |
 | Wind direction | `D` |
