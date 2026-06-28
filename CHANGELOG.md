@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.4
 
 - Added `Precipitation 1h` and `Precipitation today` diagnostic sensors derived
   from official CHMI `SRA10M` current-observation rows.
@@ -9,8 +9,7 @@
   totals.
 - Documented recommended Home Assistant Statistics and Utility Meter usage for
   weather extrema, averages, and rainfall totals.
-- Compatibility: expected to be validated with Home Assistant stable and beta
-  test harnesses before release.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
 - Migration: no user action required; new rainfall sensors appear for stations
   that advertise `SRA10M`.
 - Breaking changes: none.
