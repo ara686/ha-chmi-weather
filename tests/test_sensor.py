@@ -25,6 +25,8 @@ def _observation() -> ChmiObservation:
         wind_speed=1.3,
         wind_gust=2.9,
         wind_direction=222.0,
+        precipitation_1h=1.2,
+        precipitation_today=4.8,
         available_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
     )
 
@@ -66,6 +68,24 @@ def test_last_update_sensor_native_value() -> None:
     assert entity.state_class is None
 
 
+def test_precipitation_hour_sensor_native_value() -> None:
+    entity = _entity("precipitation_1h")
+
+    assert entity.native_value == 1.2
+    assert entity.native_unit_of_measurement == "mm"
+    assert entity.device_class == "precipitation"
+    assert entity.state_class is None
+
+
+def test_precipitation_total_sensor_native_value() -> None:
+    entity = _entity("precipitation_today")
+
+    assert entity.native_value == 4.8
+    assert entity.native_unit_of_measurement == "mm"
+    assert entity.device_class == "precipitation"
+    assert entity.state_class == "total_increasing"
+
+
 def test_last_successful_poll_sensor_native_value() -> None:
     entity = _entity("last_successful_poll")
 
@@ -81,6 +101,8 @@ def test_supported_sensor_descriptions_follow_station_capabilities() -> None:
     assert "temperature" in keys
     assert "humidity" in keys
     assert "precipitation_10m" in keys
+    assert "precipitation_1h" in keys
+    assert "precipitation_today" in keys
     assert "wind_speed" in keys
     assert "wind_gust" in keys
     assert "wind_direction" in keys
