@@ -17,6 +17,8 @@ from custom_components.chmi_weather.api import (
     ChmiApiDataError,
     nearest_stations,
     parse_current_observations,
+    parse_flag_descriptions,
+    parse_quality_descriptions,
     parse_station_capabilities,
     parse_station_metadata,
     parse_station_metadata_list,
@@ -29,6 +31,12 @@ HOURLY_FIXTURE_PATH = (
 METADATA_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_meta1_current.json"
 CAPABILITIES_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_meta2_current.json"
+)
+FLAG_METADATA_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_meta3_current.json"
+)
+QUALITY_METADATA_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_meta4_current.json"
 )
 STATION_ID = "0-203-0-11521"
 
@@ -47,6 +55,14 @@ def _metadata_fixture() -> dict:
 
 def _capabilities_fixture() -> dict:
     return json.loads(CAPABILITIES_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _flag_metadata_fixture() -> dict:
+    return json.loads(FLAG_METADATA_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _quality_metadata_fixture() -> dict:
+    return json.loads(QUALITY_METADATA_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _values(payload: dict) -> list:
@@ -394,4 +410,42 @@ def test_api_client_builds_station_capabilities_url() -> None:
     assert (
         url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
         "meta2-20260626.json"
+    )
+
+
+def test_parser_reads_flag_descriptions() -> None:
+    descriptions = parse_flag_descriptions(_flag_metadata_fixture())
+
+    assert descriptions["D"]["V"] == "Variable"
+    assert descriptions["Dmax"]["V"] == "Variable"
+    assert descriptions["SCE"]["A"] == "Ovlivneno umelym snezenim"
+
+
+def test_parser_reads_quality_descriptions() -> None:
+    descriptions = parse_quality_descriptions(_quality_metadata_fixture())
+
+    assert descriptions[0] == "Good/Kvalitni hodnota"
+    assert descriptions[1] == "Suspect/Podezrela hodnota"
+    assert descriptions[5] == "Unknown/Kvalita neznama"
+
+
+def test_api_client_builds_flag_descriptions_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_flag_descriptions_url(date(2026, 6, 26))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
+        "meta3-20260626.json"
+    )
+
+
+def test_api_client_builds_quality_descriptions_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_quality_descriptions_url(date(2026, 6, 26))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
+        "meta4-20260626.json"
     )

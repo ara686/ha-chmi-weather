@@ -15,16 +15,13 @@ products, image entities, or camera entities.
 - Current station values from official `now/data` files.
 - Station element capability filtering from official `meta2` metadata.
 - `SRA1H` support for hourly precipitation when the station advertises it.
-- Basic `QUALITY` and raw `FLAG` diagnostics for selected current observation
-  rows.
+- `QUALITY` and `FLAG` diagnostics for selected current observation rows,
+  including CHMI `meta3` flag descriptions and `meta4` quality-code
+  descriptions when available.
 - Tests, CI, and docs.
 
 ## TODO
 
-- Add `meta3` parsing for CHMI `FLAG` descriptions and include the descriptions
-  in diagnostics.
-- Load `meta4` quality-code metadata from CHMI instead of relying only on the
-  built-in quality-code map.
 - Decide whether disabled-by-default data-quality sensors are useful after
   diagnostics have enough detail.
 - Add official CHMI station recent/daily summary support where data is available:

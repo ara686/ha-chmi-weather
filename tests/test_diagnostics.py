@@ -31,8 +31,8 @@ def _observation() -> ChmiObservation:
         wind_gust=2.9,
         wind_direction=222.0,
         available_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
-        quality_by_element={"T": 5.0, "SRA10M": 0.0},
-        flag_by_element={"T": None, "SRA10M": None},
+        quality_by_element={"T": 5.0, "SRA10M": 0.0, "D": 0.0},
+        flag_by_element={"T": None, "SRA10M": None, "D": "V"},
     )
 
 
@@ -50,7 +50,14 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
             CONF_SUPPORTED_ELEMENTS_BY_INTERVAL: {"10": ["SRA10M"], "60": ["SRA1H"]},
         },
         options={CONF_UPDATE_INTERVAL: 60},
-        runtime_data=SimpleNamespace(coordinator=coordinator),
+        runtime_data=SimpleNamespace(
+            coordinator=coordinator,
+            flag_descriptions={"D": {"V": "Variable"}},
+            quality_descriptions={
+                0: "Good/Kvalitni hodnota",
+                5: "Unknown/Kvalita neznama",
+            },
+        ),
     )
     hass = SimpleNamespace(data={DOMAIN: {}})
 
@@ -67,11 +74,18 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
     }
     assert diagnostics["quality_by_element"]["T"] == {
         "code": 5.0,
-        "description": "Unknown",
+        "description": "Unknown/Kvalita neznama",
     }
     assert diagnostics["quality_by_element"]["SRA10M"] == {
         "code": 0.0,
-        "description": "Good",
+        "description": "Good/Kvalitni hodnota",
     }
-    assert diagnostics["flag_by_element"] == {"T": None, "SRA10M": None}
-    assert diagnostics["quality_code_descriptions"]["0"] == "Good"
+    assert diagnostics["flag_by_element"]["T"] == {
+        "flag": None,
+        "description": None,
+    }
+    assert diagnostics["flag_by_element"]["D"] == {
+        "flag": "V",
+        "description": "Variable",
+    }
+    assert diagnostics["quality_code_descriptions"]["0"] == "Good/Kvalitni hodnota"

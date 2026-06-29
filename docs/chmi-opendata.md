@@ -150,10 +150,16 @@ diagnostic sensor unless the station advertises `P` in `meta2`.
 Current observation rows include CHMI `FLAG` and `QUALITY` columns. The
 integration exposes these details only through Home Assistant diagnostics:
 
-- `quality_by_element`: selected `QUALITY` code and a short description for each
-  parsed element.
-- `flag_by_element`: selected `FLAG` value for each parsed element.
-- `quality_code_descriptions`: known quality-code descriptions.
+- `quality_by_element`: selected `QUALITY` code and the official CHMI `meta4`
+  description for each parsed element.
+- `flag_by_element`: selected `FLAG` value and the official CHMI `meta3`
+  description for each parsed element when CHMI publishes one.
+- `quality_code_descriptions`: current CHMI `meta4` quality-code descriptions.
+
+If the `meta4` file is temporarily unavailable during setup, the integration
+falls back to its built-in quality-code descriptions. If the `meta3` file is
+temporarily unavailable, flag descriptions are omitted but the raw selected
+`FLAG` values remain available in diagnostics.
 
 The data quality values are intentionally not exposed as regular sensor
 attributes to avoid high-churn state attributes.

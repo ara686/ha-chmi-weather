@@ -4,9 +4,6 @@ This project only publishes measured CHMI station data into Home Assistant.
 
 ## Station Data
 
-- Parse CHMI `meta3` flag descriptions and expose them in diagnostics.
-- Load CHMI `meta4` quality descriptions instead of relying only on the built-in
-  quality-code map.
 - Decide whether disabled-by-default data-quality sensors are useful after
   diagnostics are complete.
 - Add CHMI station recent/daily summaries where official station data is
