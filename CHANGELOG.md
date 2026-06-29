@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.1.5
 
 - Fixed `Precipitation today` to use the Home Assistant local date by combining
   current and previous UTC CHMI daily files, so rain after local midnight is not
   dropped when CHMI rolls over to a new UTC file.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
 - Migration: no user action required.
 - Breaking changes: none.
 
