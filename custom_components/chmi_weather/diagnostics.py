@@ -99,6 +99,11 @@ async def async_get_config_entry_diagnostics(
             and runtime_data.coordinator.last_successful_poll is not None
             else None
         ),
+        "daily_summary_date": (
+            observation.daily_summary_date.isoformat()
+            if observation is not None and observation.daily_summary_date is not None
+            else None
+        ),
         "available_elements": (
             list(observation.available_elements) if observation is not None else []
         ),

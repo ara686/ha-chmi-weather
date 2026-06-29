@@ -17,7 +17,7 @@ from custom_components.chmi_weather.const import (
     CONF_UPDATE_INTERVAL,
 )
 from custom_components.chmi_weather.coordinator import ChmiDataUpdateCoordinator
-from custom_components.chmi_weather.models import ChmiObservation
+from custom_components.chmi_weather.models import ChmiDailySummary, ChmiObservation
 
 
 def _observation() -> ChmiObservation:
@@ -40,6 +40,7 @@ class SuccessfulClient:
     def __init__(self) -> None:
         """Initialize call recording."""
         self.calls = []
+        self.daily_calls = []
 
     async def async_get_current_observations(
         self,
@@ -59,6 +60,18 @@ class SuccessfulClient:
         )
         return _observation()
 
+    async def async_get_recent_daily_summary(self, station_id: str, summary_date):
+        self.daily_calls.append((station_id, summary_date))
+        return ChmiDailySummary(
+            station_id=station_id,
+            summary_date=summary_date,
+            yesterday_precipitation=0.8,
+            yesterday_temperature_max=30.4,
+            yesterday_temperature_min=13.2,
+            yesterday_wind_gust_max=6.8,
+            month_precipitation_chmi=3.4,
+        )
+
 
 class FailingClient:
     """Client that always fails."""
@@ -72,6 +85,14 @@ class FailingClient:
         precipitation_1h_interval_minutes,
     ):
         raise ChmiApiDataError("bad data")
+
+
+class DailySummaryFailingClient(SuccessfulClient):
+    """Client that returns current data but fails for recent daily summary."""
+
+    async def async_get_recent_daily_summary(self, station_id: str, summary_date):
+        self.daily_calls.append((station_id, summary_date))
+        raise ChmiApiDataError("bad daily data")
 
 
 def _config_entry(*, options=None):
@@ -117,11 +138,17 @@ def test_coordinator_records_last_successful_poll() -> None:
 
     observation = asyncio.run(coordinator._async_update_data())
 
-    assert observation == _observation()
-    assert coordinator.last_observation == _observation()
+    assert observation.temperature == _observation().temperature
+    assert coordinator.last_observation == observation
     assert coordinator.last_successful_poll is not None
     assert coordinator.last_successful_poll.tzinfo == UTC
     assert client.calls == [("0-203-0-11521", 10, UTC, 60)]
+    assert client.daily_calls == [("0-203-0-11521", observation.daily_summary_date)]
+    assert observation.yesterday_precipitation == 0.8
+    assert observation.yesterday_temperature_max == 30.4
+    assert observation.yesterday_temperature_min == 13.2
+    assert observation.yesterday_wind_gust_max == 6.8
+    assert observation.month_precipitation_chmi == 3.4
 
 
 def test_coordinator_passes_home_assistant_timezone() -> None:
@@ -135,3 +162,18 @@ def test_coordinator_passes_home_assistant_timezone() -> None:
     asyncio.run(coordinator._async_update_data())
 
     assert client.calls[0][2].key == "Europe/Prague"
+
+
+def test_coordinator_keeps_current_observation_when_daily_summary_fails() -> None:
+    client = DailySummaryFailingClient()
+    coordinator = ChmiDataUpdateCoordinator(
+        hass=SimpleNamespace(),
+        config_entry=_config_entry(),
+        client=client,
+    )
+
+    observation = asyncio.run(coordinator._async_update_data())
+
+    assert observation.temperature == 32.7
+    assert observation.yesterday_precipitation is None
+    assert client.daily_calls

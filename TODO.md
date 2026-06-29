@@ -4,13 +4,6 @@ This project only publishes measured CHMI station data into Home Assistant.
 
 ## Station Data
 
-- Add CHMI station recent/daily summaries where official station data is
-  available:
-  - `yesterday_precipitation`
-  - `yesterday_temperature_max`
-  - `yesterday_temperature_min`
-  - `yesterday_wind_gust_max`
-  - `month_precipitation_chmi`
 - Improve weather condition from station-measured elements when advertised, such
   as 1-hour SYNOP `ww`, `W1`, `W2`, `N`, `VV`, and `Td`.
 - Add validation tests for additional station examples.

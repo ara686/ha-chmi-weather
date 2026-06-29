@@ -11,6 +11,9 @@
   descriptions and official quality-code descriptions when available.
 - Documented that CHMI data-quality details stay in diagnostics instead of
   separate disabled-by-default sensors.
+- Added recent daily summary sensors from official CHMI `recent/data/daily`
+  files for yesterday precipitation, yesterday temperature maximum/minimum,
+  yesterday wind gust maximum, and CHMI month precipitation.
 
 ## 0.1.6
 

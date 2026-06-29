@@ -20,14 +20,13 @@ products, image entities, or camera entities.
   descriptions when available.
 - Data-quality details intentionally kept in diagnostics instead of regular
   disabled-by-default sensors.
+- Official CHMI recent daily summary sensors for yesterday precipitation,
+  yesterday temperature maximum/minimum, yesterday wind gust maximum, and CHMI
+  month precipitation.
 - Tests, CI, and docs.
 
 ## TODO
 
-- Add official CHMI station recent/daily summary support where data is available:
-  `yesterday_precipitation`, `yesterday_temperature_max`,
-  `yesterday_temperature_min`, `yesterday_wind_gust_max`, and
-  `month_precipitation_chmi`.
 - Improve the weather condition using station-measured elements when advertised,
   such as 1-hour SYNOP `ww`, `W1`, `W2`, `N`, `VV`, and `Td`.
 - Add validation tests for additional station examples.

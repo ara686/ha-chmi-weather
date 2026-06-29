@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from types import SimpleNamespace
 
 from custom_components.chmi_weather.const import (
@@ -30,6 +30,7 @@ def _observation() -> ChmiObservation:
         wind_speed=1.3,
         wind_gust=2.9,
         wind_direction=222.0,
+        daily_summary_date=date(2026, 6, 25),
         available_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
         quality_by_element={"T": 5.0, "SRA10M": 0.0, "D": 0.0},
         flag_by_element={"T": None, "SRA10M": None, "D": "V"},
@@ -65,6 +66,7 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
 
     assert diagnostics["last_observed_timestamp"] == "2026-06-26T08:50:00+00:00"
     assert diagnostics["last_successful_poll_timestamp"] == "2026-06-26T08:51:00+00:00"
+    assert diagnostics["daily_summary_date"] == "2026-06-25"
     assert diagnostics["observation_interval_minutes"] == 10
     assert diagnostics["configured_update_interval_minutes"] == 60
     assert diagnostics["effective_update_interval_minutes"] == 10
