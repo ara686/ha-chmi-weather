@@ -78,7 +78,9 @@ the official OpenData `meta2` file for the station, so Home Assistant only
 exposes values the station advertises for the selected observation interval. The
 same metadata is used to select the shortest available observation interval for
 the station. Current CHMI metadata commonly advertises `10M` and `1H`; when both
-are available, the integration uses `10M`.
+are available, the integration uses `10M`. If the station also advertises hourly
+`SRA1H`, the integration may fetch the matching `1h` file and use that value for
+the `Precipitation 1h` sensor.
 
 The update interval option is capped by the selected station observation
 interval. For example, if a station advertises `10M` data and an older config
@@ -93,13 +95,19 @@ present in the official `meta2` file, the integration creates:
 
 - `weather.chmi_dobrichovice`
 - `sensor.chmi_dobrichovice_temperature`
+- `sensor.chmi_dobrichovice_temperature_maximum_10m`
+- `sensor.chmi_dobrichovice_temperature_minimum_10m`
+- `sensor.chmi_dobrichovice_apparent_temperature`
 - `sensor.chmi_dobrichovice_humidity`
 - `sensor.chmi_dobrichovice_precipitation_10m`
 - `sensor.chmi_dobrichovice_precipitation_1h`
 - `sensor.chmi_dobrichovice_precipitation_today`
 - `sensor.chmi_dobrichovice_wind_speed`
+- `sensor.chmi_dobrichovice_average_wind_speed`
 - `sensor.chmi_dobrichovice_wind_gust`
 - `sensor.chmi_dobrichovice_wind_direction`
+- `sensor.chmi_dobrichovice_average_wind_direction`
+- `sensor.chmi_dobrichovice_wind_gust_direction`
 - `sensor.chmi_dobrichovice_observation_time`
 - `sensor.chmi_dobrichovice_last_successful_poll`
 
@@ -110,10 +118,11 @@ CHMI for the latest station observation. `Last successful poll` shows when Home
 Assistant last successfully downloaded data from CHMI OpenData.
 
 `Precipitation 10m` is the raw CHMI `SRA10M` interval value. `Precipitation 1h`
-is the sum of the latest hour of available `SRA10M` rows. `Precipitation today`
-is the cumulative sum of `SRA10M` rows for the current Home Assistant local date
-and uses the `total_increasing` state class so Home Assistant can derive
-calendar rainfall totals with Utility Meter helpers.
+uses raw CHMI `SRA1H` when the station advertises it; otherwise it falls back to
+the sum of the latest hour of available `SRA10M` rows. `Precipitation today` is
+the cumulative sum of `SRA10M` rows for the current Home Assistant local date and
+uses the `total_increasing` state class so Home Assistant can derive calendar
+rainfall totals with Utility Meter helpers.
 
 All entities are attached to one Home Assistant device:
 
@@ -139,6 +148,8 @@ All entities are attached to one Home Assistant device:
   available in the current and previous UTC CHMI daily files. Home Assistant
   Utility Meter history continues from the states recorded by Home Assistant
   after the integration is installed.
+- CHMI data quality flags are available in integration diagnostics, not as
+  normal sensor attributes.
 
 ## Home Assistant statistics
 
@@ -146,7 +157,7 @@ Numeric CHMI Weather sensors expose Home Assistant state classes where the value
 semantics fit long-term statistics. Use native Home Assistant statistics cards or
 Statistics helpers for weather extrema and averages such as daily, weekly, or
 monthly temperature maximums, humidity averages, pressure trends, wind gust
-maximums, and circular wind-direction means.
+maximums, average wind speed, and circular wind-direction means.
 
 For rainfall cycles, use `sensor.chmi_dobrichovice_precipitation_today` as the
 source for Home Assistant Utility Meter helpers with `delta_values` left

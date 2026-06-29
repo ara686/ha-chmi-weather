@@ -33,13 +33,20 @@ from .const import (
     CONF_SUPPORTED_ELEMENTS,
     DEFAULT_DIAGNOSTIC_SENSORS,
     DOMAIN,
+    ELEMENT_APPARENT_TEMPERATURE,
     ELEMENT_HUMIDITY,
+    ELEMENT_PRECIPITATION_1H,
     ELEMENT_PRECIPITATION_10M,
     ELEMENT_PRESSURE,
     ELEMENT_TEMPERATURE,
+    ELEMENT_TEMPERATURE_MAX_10M,
+    ELEMENT_TEMPERATURE_MIN_10M,
     ELEMENT_WIND_DIRECTION,
+    ELEMENT_WIND_DIRECTION_AVG,
     ELEMENT_WIND_GUST,
+    ELEMENT_WIND_GUST_DIRECTION,
     ELEMENT_WIND_SPEED,
+    ELEMENT_WIND_SPEED_AVG,
     MANUFACTURER,
     MODEL,
 )
@@ -52,6 +59,7 @@ class ChmiSensorDescription(SensorEntityDescription, frozen_or_thawed=True):
 
     value_fn: Callable[[ChmiDataUpdateCoordinator, ChmiObservation], Any]
     required_elements: tuple[str, ...] = ()
+    any_required_elements: tuple[str, ...] = ()
 
 
 SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
@@ -61,6 +69,36 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         translation_key="temperature",
         value_fn=lambda coordinator, observation: observation.temperature,
         required_elements=(ELEMENT_TEMPERATURE,),
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ChmiSensorDescription(
+        key="temperature_max_10m",
+        name="Temperature maximum 10m",
+        translation_key="temperature_max_10m",
+        value_fn=lambda coordinator, observation: observation.temperature_max_10m,
+        required_elements=(ELEMENT_TEMPERATURE_MAX_10M,),
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ChmiSensorDescription(
+        key="temperature_min_10m",
+        name="Temperature minimum 10m",
+        translation_key="temperature_min_10m",
+        value_fn=lambda coordinator, observation: observation.temperature_min_10m,
+        required_elements=(ELEMENT_TEMPERATURE_MIN_10M,),
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ChmiSensorDescription(
+        key="apparent_temperature",
+        name="Apparent temperature",
+        translation_key="apparent_temperature",
+        value_fn=lambda coordinator, observation: observation.apparent_temperature,
+        required_elements=(ELEMENT_APPARENT_TEMPERATURE,),
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -100,7 +138,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         name="Precipitation 1h",
         translation_key="precipitation_1h",
         value_fn=lambda coordinator, observation: observation.precipitation_1h,
-        required_elements=(ELEMENT_PRECIPITATION_10M,),
+        any_required_elements=(ELEMENT_PRECIPITATION_10M, ELEMENT_PRECIPITATION_1H),
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
     ),
@@ -125,6 +163,16 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     ChmiSensorDescription(
+        key="wind_speed_avg",
+        name="Average wind speed",
+        translation_key="wind_speed_avg",
+        value_fn=lambda coordinator, observation: observation.wind_speed_avg,
+        required_elements=(ELEMENT_WIND_SPEED_AVG,),
+        native_unit_of_measurement=UnitOfSpeed.METERS_PER_SECOND,
+        device_class=SensorDeviceClass.WIND_SPEED,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ChmiSensorDescription(
         key="wind_gust",
         name="Wind gust",
         translation_key="wind_gust",
@@ -140,6 +188,26 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         translation_key="wind_direction",
         value_fn=lambda coordinator, observation: observation.wind_direction,
         required_elements=(ELEMENT_WIND_DIRECTION,),
+        native_unit_of_measurement=DEGREE,
+        device_class=SensorDeviceClass.WIND_DIRECTION,
+        state_class=SensorStateClass.MEASUREMENT_ANGLE,
+    ),
+    ChmiSensorDescription(
+        key="wind_direction_avg",
+        name="Average wind direction",
+        translation_key="wind_direction_avg",
+        value_fn=lambda coordinator, observation: observation.wind_direction_avg,
+        required_elements=(ELEMENT_WIND_DIRECTION_AVG,),
+        native_unit_of_measurement=DEGREE,
+        device_class=SensorDeviceClass.WIND_DIRECTION,
+        state_class=SensorStateClass.MEASUREMENT_ANGLE,
+    ),
+    ChmiSensorDescription(
+        key="wind_gust_direction",
+        name="Wind gust direction",
+        translation_key="wind_gust_direction",
+        value_fn=lambda coordinator, observation: observation.wind_gust_direction,
+        required_elements=(ELEMENT_WIND_GUST_DIRECTION,),
         native_unit_of_measurement=DEGREE,
         device_class=SensorDeviceClass.WIND_DIRECTION,
         state_class=SensorStateClass.MEASUREMENT_ANGLE,
@@ -198,10 +266,19 @@ def supported_sensor_descriptions(
     return tuple(
         description
         for description in SENSOR_DESCRIPTIONS
-        if not description.required_elements
-        or all(
-            element in normalized_supported_elements
-            for element in description.required_elements
+        if (
+            not description.required_elements
+            or all(
+                element in normalized_supported_elements
+                for element in description.required_elements
+            )
+        )
+        and (
+            not description.any_required_elements
+            or any(
+                element in normalized_supported_elements
+                for element in description.any_required_elements
+            )
         )
     )
 

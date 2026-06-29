@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta, tzinfo
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -14,9 +15,11 @@ from .api import ChmiApiClient, ChmiApiError
 from .const import (
     CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DOMAIN,
+    ELEMENT_PRECIPITATION_1H,
 )
 from .models import ChmiObservation
 
@@ -46,6 +49,10 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
                     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
                 )
             ),
+        )
+        self.precipitation_1h_interval_minutes = _interval_with_supported_element(
+            config_entry.data.get(CONF_SUPPORTED_ELEMENTS_BY_INTERVAL),
+            ELEMENT_PRECIPITATION_1H,
         )
 
         configured_update_interval_minutes = int(
@@ -79,6 +86,9 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
                 station_id,
                 interval_minutes=self.observation_interval_minutes,
                 precipitation_timezone=self.precipitation_timezone,
+                precipitation_1h_interval_minutes=(
+                    self.precipitation_1h_interval_minutes
+                ),
             )
         except ChmiApiError as err:
             raise UpdateFailed(f"Failed to update CHMI observations: {err}") from err
@@ -109,3 +119,23 @@ def _hass_timezone(hass: HomeAssistant) -> tzinfo:
     except ZoneInfoNotFoundError:
         _LOGGER.warning("Invalid Home Assistant timezone %s; using UTC", time_zone)
         return UTC
+
+
+def _interval_with_supported_element(
+    elements_by_interval: object,
+    element: str,
+) -> int | None:
+    """Return the observation interval that advertises an element."""
+    if not isinstance(elements_by_interval, Mapping):
+        return None
+
+    for interval, elements in elements_by_interval.items():
+        if not isinstance(elements, list | tuple | set):
+            continue
+        if element not in {str(item) for item in elements}:
+            continue
+        try:
+            return max(1, int(interval))
+        except (TypeError, ValueError):
+            continue
+    return None

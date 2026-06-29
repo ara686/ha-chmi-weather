@@ -15,13 +15,20 @@ from .const import (
     CHMI_ELEMENT_BY_FIELD,
     CHMI_METADATA_BASE_URL,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+    ELEMENT_APPARENT_TEMPERATURE,
     ELEMENT_HUMIDITY,
+    ELEMENT_PRECIPITATION_1H,
     ELEMENT_PRECIPITATION_10M,
     ELEMENT_PRESSURE,
     ELEMENT_TEMPERATURE,
+    ELEMENT_TEMPERATURE_MAX_10M,
+    ELEMENT_TEMPERATURE_MIN_10M,
     ELEMENT_WIND_DIRECTION,
+    ELEMENT_WIND_DIRECTION_AVG,
     ELEMENT_WIND_GUST,
+    ELEMENT_WIND_GUST_DIRECTION,
     ELEMENT_WIND_SPEED,
+    ELEMENT_WIND_SPEED_AVG,
     OBSERVATION_VALUE_FIELDS,
 )
 from .models import (
@@ -76,6 +83,7 @@ class ChmiApiClient:
         *,
         interval_minutes: int = DEFAULT_OBSERVATION_INTERVAL_MINUTES,
         precipitation_timezone: tzinfo | None = None,
+        precipitation_1h_interval_minutes: int | None = None,
     ) -> ChmiObservation:
         """Return current observations for a station, falling back to yesterday."""
         today = datetime.now(UTC).date()
@@ -94,18 +102,56 @@ class ChmiApiClient:
                 continue
 
             if precipitation_timezone is None:
-                return observation
+                observations.append(observation)
+                break
             observations.append(observation)
 
         if observations:
-            return _with_precipitation_statistics(
-                observations[0],
-                observations,
-                precipitation_timezone=precipitation_timezone,
-                precipitation_date=datetime.now(precipitation_timezone).date(),
-            )
+            observation = observations[0]
+            if precipitation_timezone is not None:
+                observation = _with_precipitation_statistics(
+                    observation,
+                    observations,
+                    precipitation_timezone=precipitation_timezone,
+                    precipitation_date=datetime.now(precipitation_timezone).date(),
+                )
+
+            if (
+                precipitation_1h_interval_minutes is not None
+                and precipitation_1h_interval_minutes != interval_minutes
+            ):
+                hourly_observation = await self._async_get_optional_current_observation(
+                    station_id,
+                    today,
+                    interval_minutes=precipitation_1h_interval_minutes,
+                )
+                if (
+                    hourly_observation is not None
+                    and hourly_observation.precipitation_1h is not None
+                ):
+                    _apply_observed_precipitation_1h(observation, hourly_observation)
+            return observation
 
         raise last_error or ChmiApiDataError("No usable CHMI observations found")
+
+    async def _async_get_optional_current_observation(
+        self,
+        station_id: str,
+        today: date,
+        *,
+        interval_minutes: int,
+    ) -> ChmiObservation | None:
+        """Return optional companion observations without failing the main update."""
+        for day in (today, today - timedelta(days=1)):
+            try:
+                return await self.async_get_current_observations_for_date(
+                    station_id,
+                    day,
+                    interval_minutes=interval_minutes,
+                )
+            except ChmiApiError:
+                continue
+        return None
 
     async def async_get_current_observations_for_date(
         self,
@@ -278,7 +324,7 @@ def parse_current_observations(
         raise ChmiApiDataError("CHMI response does not contain observation rows")
 
     indices = _extract_header_indices(payload)
-    selected: dict[str, tuple[datetime | None, float]] = {}
+    selected: dict[str, tuple[datetime | None, float, str | None, float | None]] = {}
     available_elements: set[str] = set()
     precipitation_by_timestamp: dict[datetime, float] = {}
 
@@ -304,28 +350,42 @@ def parse_current_observations(
             continue
 
         observed_at = _parse_datetime(_row_value(row, indices, "DT", 2))
+        flag = _as_str(_row_value(row, indices, "FLAG", 4))
+        quality = _as_float(_row_value(row, indices, "QUALITY", 5))
         if element_code == ELEMENT_PRECIPITATION_10M and observed_at is not None:
             precipitation_by_timestamp[observed_at] = value
 
         current = selected.get(element_code)
         if current is None or _is_newer_or_equal(observed_at, current[0]):
-            selected[element_code] = (observed_at, value)
+            selected[element_code] = (observed_at, value, flag, quality)
 
     precipitation_samples = _precipitation_samples(precipitation_by_timestamp)
+    precipitation_1h = _selected_value(selected, ELEMENT_PRECIPITATION_1H)
+    if precipitation_1h is None:
+        precipitation_1h = _precipitation_last_hour(precipitation_samples)
+
     observation = ChmiObservation(
         station_id=normalized_station_id,
         observed_at=_latest_observed_at(selected),
         temperature=_selected_value(selected, ELEMENT_TEMPERATURE),
+        temperature_max_10m=_selected_value(selected, ELEMENT_TEMPERATURE_MAX_10M),
+        temperature_min_10m=_selected_value(selected, ELEMENT_TEMPERATURE_MIN_10M),
+        apparent_temperature=_selected_value(selected, ELEMENT_APPARENT_TEMPERATURE),
         humidity=_selected_value(selected, ELEMENT_HUMIDITY),
         pressure=_selected_value(selected, ELEMENT_PRESSURE),
         precipitation_10m=_selected_value(selected, ELEMENT_PRECIPITATION_10M),
         wind_speed=_selected_value(selected, ELEMENT_WIND_SPEED),
+        wind_speed_avg=_selected_value(selected, ELEMENT_WIND_SPEED_AVG),
         wind_gust=_selected_value(selected, ELEMENT_WIND_GUST),
         wind_direction=_selected_value(selected, ELEMENT_WIND_DIRECTION),
-        precipitation_1h=_precipitation_last_hour(precipitation_samples),
+        wind_direction_avg=_selected_value(selected, ELEMENT_WIND_DIRECTION_AVG),
+        wind_gust_direction=_selected_value(selected, ELEMENT_WIND_GUST_DIRECTION),
+        precipitation_1h=precipitation_1h,
         precipitation_today=_precipitation_total(precipitation_samples),
         precipitation_samples=precipitation_samples,
         available_elements=tuple(sorted(available_elements)),
+        quality_by_element=_quality_by_element(selected),
+        flag_by_element=_flag_by_element(selected),
     )
 
     if not has_usable_observation(observation):
@@ -418,6 +478,7 @@ def parse_station_capabilities(
     selected_observation_type: str | None = None
     selected_interval_minutes: int | None = None
     supported_elements: set[str] = set()
+    supported_elements_by_interval: dict[int, set[str]] = {}
     station_rows: list[Sequence[Any]] = []
 
     for row in values:
@@ -433,6 +494,17 @@ def parse_station_capabilities(
     if not station_rows:
         raise ChmiApiDataError(
             "CHMI capability metadata does not contain supported elements"
+        )
+
+    for row in station_rows:
+        row_interval_minutes = _observation_type_interval_minutes(
+            _row_observation_type(row, indices)
+        )
+        element = _as_str(_row_value(row, indices, "EG_EL_ABBREVIATION", 2))
+        if row_interval_minutes is None or element is None:
+            continue
+        supported_elements_by_interval.setdefault(row_interval_minutes, set()).add(
+            element
         )
 
     if normalized_observation_type is not None:
@@ -477,6 +549,10 @@ def parse_station_capabilities(
         supported_elements=tuple(sorted(supported_elements)),
         observation_type=selected_observation_type,
         observation_interval_minutes=selected_interval_minutes,
+        supported_elements_by_interval={
+            interval: tuple(sorted(elements))
+            for interval, elements in sorted(supported_elements_by_interval.items())
+        },
     )
 
 
@@ -671,7 +747,7 @@ def _is_newer_or_equal(
 
 
 def _selected_value(
-    selected: Mapping[str, tuple[datetime | None, float]],
+    selected: Mapping[str, tuple[datetime | None, float, str | None, float | None]],
     element: str,
 ) -> float | None:
     item = selected.get(element)
@@ -681,14 +757,34 @@ def _selected_value(
 
 
 def _latest_observed_at(
-    selected: Mapping[str, tuple[datetime | None, float]],
+    selected: Mapping[str, tuple[datetime | None, float, str | None, float | None]],
 ) -> datetime | None:
     timestamps = [
-        observed_at for observed_at, _value in selected.values() if observed_at
+        observed_at
+        for observed_at, _value, _flag, _quality in selected.values()
+        if observed_at
     ]
     if not timestamps:
         return None
     return max(timestamps)
+
+
+def _quality_by_element(
+    selected: Mapping[str, tuple[datetime | None, float, str | None, float | None]],
+) -> dict[str, float | None]:
+    return {
+        element: quality
+        for element, (_observed_at, _value, _flag, quality) in selected.items()
+    }
+
+
+def _flag_by_element(
+    selected: Mapping[str, tuple[datetime | None, float, str | None, float | None]],
+) -> dict[str, str | None]:
+    return {
+        element: flag
+        for element, (_observed_at, _value, flag, _quality) in selected.items()
+    }
 
 
 def _precipitation_samples(
@@ -742,7 +838,9 @@ def _with_precipitation_statistics(
     ]
 
     observation.precipitation_samples = samples
-    observation.precipitation_1h = _precipitation_last_hour(samples)
+    precipitation_1h = _precipitation_last_hour(samples)
+    if precipitation_1h is not None:
+        observation.precipitation_1h = precipitation_1h
     observation.precipitation_today = _precipitation_total(local_day_samples)
     return observation
 
@@ -759,4 +857,22 @@ def _combined_precipitation_samples(
             ),
             key=lambda sample: sample.observed_at,
         )
+    )
+
+
+def _apply_observed_precipitation_1h(
+    observation: ChmiObservation,
+    hourly_observation: ChmiObservation,
+) -> None:
+    observation.precipitation_1h = hourly_observation.precipitation_1h
+    if ELEMENT_PRECIPITATION_1H in hourly_observation.quality_by_element:
+        observation.quality_by_element[ELEMENT_PRECIPITATION_1H] = (
+            hourly_observation.quality_by_element[ELEMENT_PRECIPITATION_1H]
+        )
+    if ELEMENT_PRECIPITATION_1H in hourly_observation.flag_by_element:
+        observation.flag_by_element[ELEMENT_PRECIPITATION_1H] = (
+            hourly_observation.flag_by_element[ELEMENT_PRECIPITATION_1H]
+        )
+    observation.available_elements = tuple(
+        sorted({*observation.available_elements, ELEMENT_PRECIPITATION_1H})
     )

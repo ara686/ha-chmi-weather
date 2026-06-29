@@ -10,6 +10,7 @@ from custom_components.chmi_weather.const import (
     CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_SUPPORTED_ELEMENTS,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
 )
 from custom_components.chmi_weather.models import ChmiStationCapabilities
 
@@ -37,6 +38,10 @@ class FakeClient:
             supported_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
             observation_type="10M",
             observation_interval_minutes=10,
+            supported_elements_by_interval={
+                10: ("D", "F", "Fmax", "H", "SRA10M", "T"),
+                60: ("SRA1H",),
+            },
         )
 
 
@@ -63,3 +68,7 @@ def test_refresh_station_capabilities_updates_entry_data() -> None:
         "T",
     ]
     assert entry.data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
+    assert entry.data[CONF_SUPPORTED_ELEMENTS_BY_INTERVAL] == {
+        "10": ["D", "F", "Fmax", "H", "SRA10M", "T"],
+        "60": ["SRA1H"],
+    }

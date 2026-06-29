@@ -16,6 +16,7 @@ from custom_components.chmi_weather.const import (
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
 )
 from custom_components.chmi_weather.models import (
@@ -51,6 +52,10 @@ def test_config_flow_creates_entry(monkeypatch) -> None:
                 CONF_LATITUDE: 49.9335,
                 CONF_LONGITUDE: 14.27585,
                 CONF_SUPPORTED_ELEMENTS: ["D", "F", "Fmax", "H", "SRA10M", "T"],
+                CONF_SUPPORTED_ELEMENTS_BY_INTERVAL: {
+                    "10": ["D", "F", "Fmax", "H", "SRA10M", "T"],
+                    "60": ["SRA1H"],
+                },
                 CONF_OBSERVATION_INTERVAL_MINUTES: 10,
             }
         )
@@ -95,6 +100,10 @@ def test_config_flow_creates_entry(monkeypatch) -> None:
         "SRA10M",
         "T",
     ]
+    assert result["data"][CONF_SUPPORTED_ELEMENTS_BY_INTERVAL] == {
+        "10": ["D", "F", "Fmax", "H", "SRA10M", "T"],
+        "60": ["SRA1H"],
+    }
     assert result["data"][CONF_OBSERVATION_INTERVAL_MINUTES] == 10
     assert result["options"][CONF_UPDATE_INTERVAL] == 10
     assert result["options"][CONF_DIAGNOSTIC_SENSORS] is True
@@ -214,6 +223,10 @@ def test_config_flow_enriches_station_from_metadata(monkeypatch) -> None:
                 supported_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
                 observation_type="10M",
                 observation_interval_minutes=10,
+                supported_elements_by_interval={
+                    10: ("D", "F", "Fmax", "H", "SRA10M", "T"),
+                    60: ("SRA1H",),
+                },
             )
 
         async def async_get_current_observations(
@@ -254,6 +267,10 @@ def test_config_flow_enriches_station_from_metadata(monkeypatch) -> None:
     assert data[CONF_LATITUDE] == 49.9335
     assert data[CONF_LONGITUDE] == 14.27585
     assert data[CONF_SUPPORTED_ELEMENTS] == ["D", "F", "Fmax", "H", "SRA10M", "T"]
+    assert data[CONF_SUPPORTED_ELEMENTS_BY_INTERVAL] == {
+        "10": ["D", "F", "Fmax", "H", "SRA10M", "T"],
+        "60": ["SRA1H"],
+    }
     assert data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
 
 
