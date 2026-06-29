@@ -29,6 +29,12 @@ FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current.j
 RECENT_DAILY_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_dobrichovice_recent_daily.json"
 )
+SYNOP_STATION_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_synop_station_current.json"
+)
+SYNOP_STATION_HOURLY_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_synop_station_current_1h.json"
+)
 HOURLY_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current_1h.json"
 )
@@ -43,6 +49,7 @@ QUALITY_METADATA_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_meta4_current.json"
 )
 STATION_ID = "0-203-0-11521"
+SYNOP_STATION_ID = "0-20000-0-11406"
 
 
 def _fixture() -> dict:
@@ -55,6 +62,14 @@ def _hourly_fixture() -> dict:
 
 def _recent_daily_fixture() -> dict:
     return json.loads(RECENT_DAILY_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _synop_station_fixture() -> dict:
+    return json.loads(SYNOP_STATION_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _synop_station_hourly_fixture() -> dict:
+    return json.loads(SYNOP_STATION_HOURLY_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _metadata_fixture() -> dict:
@@ -162,6 +177,38 @@ def test_parser_reads_synop_weather_condition_elements() -> None:
     assert observation.present_weather_code == 61.0
     assert observation.past_weather_code_1 == 6.0
     assert observation.past_weather_code_2 == 2.0
+
+
+def test_parser_reads_additional_station_current_observations() -> None:
+    observation = parse_current_observations(
+        _synop_station_fixture(),
+        SYNOP_STATION_ID,
+    )
+
+    assert observation.station_id == SYNOP_STATION_ID
+    assert observation.observed_at.isoformat() == "2026-06-29T10:50:00+00:00"
+    assert observation.temperature == 24.0
+    assert observation.humidity == 69.0
+    assert observation.pressure == 965.7
+    assert observation.available_elements == ("H", "P", "T")
+    assert observation.quality_by_element["P"] == 5.0
+
+
+def test_parser_reads_additional_station_hourly_synop_observations() -> None:
+    observation = parse_current_observations(
+        _synop_station_hourly_fixture(),
+        SYNOP_STATION_ID,
+    )
+
+    assert observation.station_id == SYNOP_STATION_ID
+    assert observation.observed_at.isoformat() == "2026-06-29T10:00:00+00:00"
+    assert observation.precipitation_1h == 0.0
+    assert observation.dew_point == 17.2
+    assert observation.visibility_code == 40.0
+    assert observation.present_weather_code == 100.0
+    assert observation.past_weather_code_1 == 18.0
+    assert observation.past_weather_code_2 == 18.0
+    assert "ww" in observation.available_elements
 
 
 def test_api_client_calculates_precipitation_today_for_local_date(

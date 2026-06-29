@@ -17,6 +17,8 @@
 - Improved the Home Assistant weather condition by using station-measured SYNOP
   elements such as `ww`, `N`, `VV`, `Td`, `W1`, and `W2` when CHMI advertises
   them.
+- Added parser validation fixtures for an additional CHMI station with pressure
+  and SYNOP `1H` elements.
 
 ## 0.1.6
 
