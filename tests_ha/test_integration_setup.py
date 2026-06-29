@@ -57,6 +57,7 @@ class FakeChmiApiClient:
         station_id: str,
         *,
         interval_minutes: int,
+        precipitation_timezone,
     ) -> ChmiObservation:
         """Return a current observation."""
         assert interval_minutes == 10
