@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.6
 
 - Added current-station sensors for 10-minute temperature extrema, apparent
   temperature, average wind speed, average wind direction, and wind gust
