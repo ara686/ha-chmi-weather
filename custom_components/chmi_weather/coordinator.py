@@ -20,8 +20,9 @@ from .const import (
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DOMAIN,
     ELEMENT_PRECIPITATION_1H,
+    WEATHER_CONDITION_ELEMENTS,
 )
-from .models import ChmiObservation
+from .models import ChmiDailySummary, ChmiObservation
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,6 +55,10 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             config_entry.data.get(CONF_SUPPORTED_ELEMENTS_BY_INTERVAL),
             ELEMENT_PRECIPITATION_1H,
         )
+        self.weather_condition_interval_minutes = _interval_with_any_supported_element(
+            config_entry.data.get(CONF_SUPPORTED_ELEMENTS_BY_INTERVAL),
+            WEATHER_CONDITION_ELEMENTS,
+        )
 
         configured_update_interval_minutes = int(
             config_entry.options.get(
@@ -81,6 +86,7 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
     async def _async_update_data(self) -> ChmiObservation:
         """Fetch the latest observation from CHMI OpenData."""
         station_id = self.config_entry.data[CONF_STATION_ID]
+        previous_observation = self.last_observation
         try:
             observation = await self.client.async_get_current_observations(
                 station_id,
@@ -89,6 +95,9 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
                 precipitation_1h_interval_minutes=(
                     self.precipitation_1h_interval_minutes
                 ),
+                weather_condition_interval_minutes=(
+                    self.weather_condition_interval_minutes
+                ),
             )
         except ChmiApiError as err:
             raise UpdateFailed(f"Failed to update CHMI observations: {err}") from err
@@ -96,6 +105,24 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             raise UpdateFailed(
                 "Unexpected error while updating CHMI observations"
             ) from err
+
+        daily_summary_date = datetime.now(self.precipitation_timezone).date() - (
+            timedelta(days=1)
+        )
+        try:
+            daily_summary = await self.client.async_get_recent_daily_summary(
+                station_id,
+                daily_summary_date,
+            )
+        except ChmiApiError as err:
+            _LOGGER.debug("Failed to update CHMI recent daily summary: %s", err)
+            if (
+                previous_observation is not None
+                and previous_observation.daily_summary_date == daily_summary_date
+            ):
+                _copy_daily_summary(observation, previous_observation)
+        else:
+            _apply_daily_summary(observation, daily_summary)
 
         self.last_observation = observation
         self.last_successful_poll = datetime.now(UTC)
@@ -139,3 +166,54 @@ def _interval_with_supported_element(
         except (TypeError, ValueError):
             continue
     return None
+
+
+def _interval_with_any_supported_element(
+    elements_by_interval: object,
+    elements: tuple[str, ...],
+) -> int | None:
+    """Return the first interval that advertises any of the requested elements."""
+    if not isinstance(elements_by_interval, Mapping):
+        return None
+
+    requested_elements = set(elements)
+    for interval, interval_elements in elements_by_interval.items():
+        if not isinstance(interval_elements, list | tuple | set):
+            continue
+        if requested_elements.isdisjoint({str(item) for item in interval_elements}):
+            continue
+        try:
+            return max(1, int(interval))
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _apply_daily_summary(
+    observation: ChmiObservation,
+    daily_summary: ChmiDailySummary,
+) -> None:
+    """Attach recent daily summary values to a current observation."""
+    observation.daily_summary_date = daily_summary.summary_date
+    observation.yesterday_precipitation = daily_summary.yesterday_precipitation
+    observation.yesterday_temperature_max = daily_summary.yesterday_temperature_max
+    observation.yesterday_temperature_min = daily_summary.yesterday_temperature_min
+    observation.yesterday_wind_gust_max = daily_summary.yesterday_wind_gust_max
+    observation.month_precipitation_chmi = daily_summary.month_precipitation_chmi
+
+
+def _copy_daily_summary(
+    observation: ChmiObservation,
+    previous_observation: ChmiObservation,
+) -> None:
+    """Keep same-day daily summary values during temporary daily endpoint errors."""
+    observation.daily_summary_date = previous_observation.daily_summary_date
+    observation.yesterday_precipitation = previous_observation.yesterday_precipitation
+    observation.yesterday_temperature_max = (
+        previous_observation.yesterday_temperature_max
+    )
+    observation.yesterday_temperature_min = (
+        previous_observation.yesterday_temperature_min
+    )
+    observation.yesterday_wind_gust_max = previous_observation.yesterday_wind_gust_max
+    observation.month_precipitation_chmi = previous_observation.month_precipitation_chmi

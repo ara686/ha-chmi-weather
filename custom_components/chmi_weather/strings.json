@@ -35,8 +35,7 @@
         "title": "CHMI Weather options",
         "data": {
           "update_interval_minutes": "Update interval in minutes",
-          "diagnostic_sensors": "Enable diagnostic sensors",
-          "forecast_source": "Forecast source"
+          "diagnostic_sensors": "Enable diagnostic sensors"
         }
       }
     }
@@ -69,6 +68,21 @@
       },
       "precipitation_today": {
         "name": "Precipitation today"
+      },
+      "yesterday_precipitation": {
+        "name": "Yesterday precipitation"
+      },
+      "yesterday_temperature_max": {
+        "name": "Yesterday temperature maximum"
+      },
+      "yesterday_temperature_min": {
+        "name": "Yesterday temperature minimum"
+      },
+      "yesterday_wind_gust_max": {
+        "name": "Yesterday wind gust maximum"
+      },
+      "month_precipitation_chmi": {
+        "name": "CHMI month precipitation"
       },
       "wind_speed": {
         "name": "Wind speed"

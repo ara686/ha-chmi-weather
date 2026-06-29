@@ -17,12 +17,24 @@ from custom_components.chmi_weather.api import (
     ChmiApiDataError,
     nearest_stations,
     parse_current_observations,
+    parse_flag_descriptions,
+    parse_quality_descriptions,
+    parse_recent_daily_summary,
     parse_station_capabilities,
     parse_station_metadata,
     parse_station_metadata_list,
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current.json"
+RECENT_DAILY_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_dobrichovice_recent_daily.json"
+)
+SYNOP_STATION_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_synop_station_current.json"
+)
+SYNOP_STATION_HOURLY_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_synop_station_current_1h.json"
+)
 HOURLY_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current_1h.json"
 )
@@ -30,7 +42,14 @@ METADATA_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_meta1_current
 CAPABILITIES_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_meta2_current.json"
 )
+FLAG_METADATA_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_meta3_current.json"
+)
+QUALITY_METADATA_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_meta4_current.json"
+)
 STATION_ID = "0-203-0-11521"
+SYNOP_STATION_ID = "0-20000-0-11406"
 
 
 def _fixture() -> dict:
@@ -41,12 +60,32 @@ def _hourly_fixture() -> dict:
     return json.loads(HOURLY_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
+def _recent_daily_fixture() -> dict:
+    return json.loads(RECENT_DAILY_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _synop_station_fixture() -> dict:
+    return json.loads(SYNOP_STATION_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _synop_station_hourly_fixture() -> dict:
+    return json.loads(SYNOP_STATION_HOURLY_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
 def _metadata_fixture() -> dict:
     return json.loads(METADATA_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _capabilities_fixture() -> dict:
     return json.loads(CAPABILITIES_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _flag_metadata_fixture() -> dict:
+    return json.loads(FLAG_METADATA_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _quality_metadata_fixture() -> dict:
+    return json.loads(QUALITY_METADATA_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _values(payload: dict) -> list:
@@ -114,6 +153,62 @@ def test_parser_reads_observed_hourly_precipitation() -> None:
     assert observation.precipitation_today is None
     assert observation.precipitation_samples == ()
     assert observation.quality_by_element["SRA1H"] == 5.0
+
+
+def test_parser_reads_synop_weather_condition_elements() -> None:
+    payload = deepcopy(_hourly_fixture())
+    rows = _values(payload)
+    rows.extend(
+        [
+            [STATION_ID, "N", "2026-06-26T09:00:00Z", 8.0, "", 0.0],
+            [STATION_ID, "Td", "2026-06-26T09:00:00Z", 16.4, "", 0.0],
+            [STATION_ID, "VV", "2026-06-26T09:00:00Z", 70.0, "", 0.0],
+            [STATION_ID, "ww", "2026-06-26T09:00:00Z", 61.0, "", 0.0],
+            [STATION_ID, "W1", "2026-06-26T09:00:00Z", 6.0, "", 0.0],
+            [STATION_ID, "W2", "2026-06-26T09:00:00Z", 2.0, "", 0.0],
+        ]
+    )
+
+    observation = parse_current_observations(payload, STATION_ID)
+
+    assert observation.cloud_coverage == 8.0
+    assert observation.dew_point == 16.4
+    assert observation.visibility_code == 70.0
+    assert observation.present_weather_code == 61.0
+    assert observation.past_weather_code_1 == 6.0
+    assert observation.past_weather_code_2 == 2.0
+
+
+def test_parser_reads_additional_station_current_observations() -> None:
+    observation = parse_current_observations(
+        _synop_station_fixture(),
+        SYNOP_STATION_ID,
+    )
+
+    assert observation.station_id == SYNOP_STATION_ID
+    assert observation.observed_at.isoformat() == "2026-06-29T10:50:00+00:00"
+    assert observation.temperature == 24.0
+    assert observation.humidity == 69.0
+    assert observation.pressure == 965.7
+    assert observation.available_elements == ("H", "P", "T")
+    assert observation.quality_by_element["P"] == 5.0
+
+
+def test_parser_reads_additional_station_hourly_synop_observations() -> None:
+    observation = parse_current_observations(
+        _synop_station_hourly_fixture(),
+        SYNOP_STATION_ID,
+    )
+
+    assert observation.station_id == SYNOP_STATION_ID
+    assert observation.observed_at.isoformat() == "2026-06-29T10:00:00+00:00"
+    assert observation.precipitation_1h == 0.0
+    assert observation.dew_point == 17.2
+    assert observation.visibility_code == 40.0
+    assert observation.present_weather_code == 100.0
+    assert observation.past_weather_code_1 == 18.0
+    assert observation.past_weather_code_2 == 18.0
+    assert "ww" in observation.available_elements
 
 
 def test_api_client_calculates_precipitation_today_for_local_date(
@@ -219,6 +314,50 @@ def test_api_client_prefers_companion_hourly_precipitation(
     assert observation.available_elements[-1] == "TPM"
     assert "SRA1H" in observation.available_elements
     assert observation.quality_by_element["SRA1H"] == 5.0
+    assert client.calls == [(date(2026, 6, 26), 10), (date(2026, 6, 26), 60)]
+
+
+def test_api_client_applies_companion_hourly_weather_condition_elements(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 26, 9, 30, tzinfo=tz or UTC)
+
+    class PayloadClient(ChmiApiClient):
+        def __init__(self):
+            super().__init__(session=object())
+            self.calls = []
+
+        async def async_get_current_observations_for_date(
+            self,
+            station_id: str,
+            day: date,
+            *,
+            interval_minutes: int = 10,
+        ):
+            self.calls.append((day, interval_minutes))
+            if interval_minutes == 60:
+                payload = deepcopy(_hourly_fixture())
+                _values(payload).append(
+                    [STATION_ID, "ww", "2026-06-26T09:00:00Z", 61.0, "", 0.0]
+                )
+                return parse_current_observations(payload, station_id)
+            return parse_current_observations(_fixture(), station_id)
+
+    client = PayloadClient()
+    monkeypatch.setattr(api, "datetime", FrozenDatetime)
+
+    observation = asyncio.run(
+        client.async_get_current_observations(
+            STATION_ID,
+            weather_condition_interval_minutes=60,
+        )
+    )
+
+    assert observation.present_weather_code == 61.0
+    assert "ww" in observation.available_elements
     assert client.calls == [(date(2026, 6, 26), 10), (date(2026, 6, 26), 60)]
 
 
@@ -395,3 +534,75 @@ def test_api_client_builds_station_capabilities_url() -> None:
         url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
         "meta2-20260626.json"
     )
+
+
+def test_parser_reads_flag_descriptions() -> None:
+    descriptions = parse_flag_descriptions(_flag_metadata_fixture())
+
+    assert descriptions["D"]["V"] == "Variable"
+    assert descriptions["Dmax"]["V"] == "Variable"
+    assert descriptions["SCE"]["A"] == "Ovlivneno umelym snezenim"
+
+
+def test_parser_reads_quality_descriptions() -> None:
+    descriptions = parse_quality_descriptions(_quality_metadata_fixture())
+
+    assert descriptions[0] == "Good/Kvalitni hodnota"
+    assert descriptions[1] == "Suspect/Podezrela hodnota"
+    assert descriptions[5] == "Unknown/Kvalita neznama"
+
+
+def test_api_client_builds_flag_descriptions_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_flag_descriptions_url(date(2026, 6, 26))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
+        "meta3-20260626.json"
+    )
+
+
+def test_api_client_builds_quality_descriptions_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_quality_descriptions_url(date(2026, 6, 26))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
+        "meta4-20260626.json"
+    )
+
+
+def test_parser_reads_recent_daily_summary() -> None:
+    summary = parse_recent_daily_summary(
+        _recent_daily_fixture(),
+        STATION_ID,
+        date(2026, 6, 28),
+    )
+
+    assert summary.station_id == STATION_ID
+    assert summary.summary_date == date(2026, 6, 28)
+    assert summary.yesterday_precipitation == 0.8
+    assert summary.yesterday_temperature_max == 30.4
+    assert summary.yesterday_temperature_min == 13.2
+    assert summary.yesterday_wind_gust_max == 6.8
+    assert summary.month_precipitation_chmi == 3.4
+
+
+def test_api_client_builds_recent_daily_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_recent_daily_url(STATION_ID, date(2026, 6, 28))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/recent/data/daily/"
+        "dly-0-203-0-11521-202606.json"
+    )
+
+
+def test_api_client_rejects_unsafe_station_id_for_recent_daily_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    with pytest.raises(ChmiApiDataError):
+        client._build_recent_daily_url("../0-203-0-11521?x=1", date(2026, 6, 28))

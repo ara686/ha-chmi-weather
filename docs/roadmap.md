@@ -1,33 +1,41 @@
 # Roadmap
 
-## Phase 1 - Current observation MVP
+CHMI Weather is scoped to measured CHMI station data published into Home
+Assistant. It should not implement CHMI text forecasts, alerts/warnings, radar
+products, image entities, or camera entities.
+
+## Done
 
 - HACS-ready custom integration structure.
-- UI config flow with Dobrichovice defaults.
+- UI config flow with nearest-station selection from official `meta1` station
+  metadata.
 - Async CHMI OpenData client.
 - DataUpdateCoordinator polling.
-- Weather entity and diagnostic sensors.
+- Weather entity and station-supported diagnostic sensors.
+- Current station values from official `now/data` files.
+- Station element capability filtering from official `meta2` metadata.
+- `SRA1H` support for hourly precipitation when the station advertises it.
+- `QUALITY` and `FLAG` diagnostics for selected current observation rows,
+  including CHMI `meta3` flag descriptions and `meta4` quality-code
+  descriptions when available.
+- Data-quality details intentionally kept in diagnostics instead of regular
+  disabled-by-default sensors.
+- Official CHMI recent daily summary sensors for yesterday precipitation,
+  yesterday temperature maximum/minimum, yesterday wind gust maximum, and CHMI
+  month precipitation.
+- Weather condition mapping from station-measured SYNOP elements when
+  advertised, including `ww`, `N`, `VV`, `Td`, `W1`, and `W2`.
+- Parser validation fixtures for additional station examples beyond
+  Dobrichovice, including a station with pressure and SYNOP `1H` elements.
 - Tests, CI, and docs.
 
-## Phase 2 - Station selection
+## TODO
 
-- Use official `meta1` OpenData metadata to normalize station names and
-  coordinates.
-- Offer nearest stations by distance from user-entered GPS coordinates.
-- Use official `meta2` OpenData metadata to select diagnostic sensors supported
-  by the station.
-- Add validation tests for additional station examples.
-- Consider using Home Assistant location defaults more prominently in the picker.
+- No open station-data items currently.
 
-## Phase 3 - Forecast
+## Non-Goals
 
-- Identify official ČHMÚ forecast OpenData endpoints.
-- Add options for forecast source selection.
-- Implement hourly and daily forecast methods only after data mapping is clear.
-- Do not fake forecast data from current observations.
-
-## Phase 4 - Additional products
-
-- Evaluate official radar and warning OpenData endpoints.
-- Add separate entities only where Home Assistant has a clear entity model.
-- Keep each new data source behind parser fixtures and tests.
+- Text forecast sensors or events.
+- Weather alert or warning entities.
+- Radar, image, or camera entities.
+- Non-station CHMI products.

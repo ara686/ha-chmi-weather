@@ -10,9 +10,14 @@ CHMI Weather is a Home Assistant custom integration for weather station data fro
 ČHMÚ OpenData. The MVP reads current observations for one configured station at
 the shortest interval advertised by official CHMI metadata, creates a standard
 `weather` entity, and can expose diagnostic sensors for the raw measured values.
+The project scope is limited to measured CHMI station data published into Home
+Assistant.
 
 The integration uses official ČHMÚ OpenData JSON endpoints only. It does not
 scrape `chmi.cz` HTML pages.
+
+CHMI text forecasts, weather alerts/warnings, radar products, image entities, and
+camera entities are intentionally out of scope for this integration.
 
 This project is not affiliated with, endorsed by, certified by, or supported by
 CHMI, Home Assistant, HACS, Nabu Casa, or the Open Home Foundation.
@@ -102,6 +107,11 @@ present in the official `meta2` file, the integration creates:
 - `sensor.chmi_dobrichovice_precipitation_10m`
 - `sensor.chmi_dobrichovice_precipitation_1h`
 - `sensor.chmi_dobrichovice_precipitation_today`
+- `sensor.chmi_dobrichovice_yesterday_precipitation`
+- `sensor.chmi_dobrichovice_yesterday_temperature_maximum`
+- `sensor.chmi_dobrichovice_yesterday_temperature_minimum`
+- `sensor.chmi_dobrichovice_yesterday_wind_gust_maximum`
+- `sensor.chmi_dobrichovice_chmi_month_precipitation`
 - `sensor.chmi_dobrichovice_wind_speed`
 - `sensor.chmi_dobrichovice_average_wind_speed`
 - `sensor.chmi_dobrichovice_wind_gust`
@@ -124,6 +134,13 @@ the cumulative sum of `SRA10M` rows for the current Home Assistant local date an
 uses the `total_increasing` state class so Home Assistant can derive calendar
 rainfall totals with Utility Meter helpers.
 
+`Yesterday precipitation`, `Yesterday temperature maximum`, `Yesterday
+temperature minimum`, `Yesterday wind gust maximum`, and `CHMI month
+precipitation` come from official CHMI `recent/data/daily` station files. These
+values are CHMI daily summaries for the last completed local date. The monthly
+precipitation value is the sum of usable daily `SRA` rows in the same CHMI daily
+file up to that summary date.
+
 All entities are attached to one Home Assistant device:
 
 - Manufacturer: ČHMÚ
@@ -134,10 +151,14 @@ All entities are attached to one Home Assistant device:
 ## Known MVP limitations
 
 - The integration is under active development and is not production-ready.
-- The MVP uses only current measured data from one station.
-- Forecast is not implemented yet.
-- The weather condition is best-effort: rain in the last 10 minutes maps to
-  `rainy`; otherwise it maps to `partlycloudy`.
+- The MVP uses only current measured data from one station. Future work stays
+  limited to measured station data.
+- Text forecasts, weather alerts/warnings, radar products, image entities, and
+  camera entities are not planned.
+- The weather condition is best-effort. When the station advertises SYNOP
+  elements such as `ww`, `N`, `VV`, `Td`, `W1`, or `W2`, the integration uses
+  those measured station values. Otherwise it falls back to recent
+  precipitation and then `partlycloudy`.
 - Data quality and freshness depend on the ČHMÚ OpenData endpoint.
 - Home Assistant history only records data after the integration polls
   successfully; CHMI data already missed by an older polling configuration is
@@ -145,9 +166,12 @@ All entities are attached to one Home Assistant device:
 - The Dobřichovice `meta2` metadata currently does not advertise pressure
   element `P`, so the pressure diagnostic sensor is not created for this station.
 - Direct `Precipitation 1h` and `Precipitation today` values are limited to rows
-  available in the current and previous UTC CHMI daily files. Home Assistant
+  available in the current and previous UTC CHMI `now/data` files. Home Assistant
   Utility Meter history continues from the states recorded by Home Assistant
   after the integration is installed.
+- Recent daily summary sensors depend on CHMI `recent/data/daily` files. They
+  appear as unavailable if CHMI has not published a usable value for the last
+  completed local date yet.
 - CHMI data quality flags are available in integration diagnostics, not as
   normal sensor attributes.
 
@@ -163,8 +187,10 @@ For rainfall cycles, use `sensor.chmi_dobrichovice_precipitation_today` as the
 source for Home Assistant Utility Meter helpers with `delta_values` left
 disabled. Do not use `sensor.chmi_dobrichovice_precipitation_10m` directly as a
 Utility Meter source; it is a per-observation interval value, not a cumulative
-meter. See `docs/statistics.md` for example hourly, daily, weekly, and monthly
-rainfall helpers.
+meter. Use `sensor.chmi_dobrichovice_chmi_month_precipitation` when you want the
+official CHMI month-to-date daily-summary total instead of a Home Assistant
+Utility Meter total built from integration history. See `docs/statistics.md` for
+example hourly, daily, weekly, and monthly rainfall helpers.
 
 ## Troubleshooting
 
@@ -220,7 +246,6 @@ See `SECURITY.md` for vulnerability reporting and dependency audit scope.
 
 ## Roadmap
 
-1. Current observations MVP.
-2. Forecast source selection without fake forecast data.
-3. Hourly and daily forecast entities using official ČHMÚ OpenData.
-4. Radar or warning support if suitable official OpenData endpoints are stable.
+See `TODO.md` and `docs/roadmap.md`. Planned work is limited to CHMI station
+data, quality metadata, station-derived summaries, and station-measured weather
+condition improvements.

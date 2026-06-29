@@ -31,6 +31,14 @@ class FakeConfigEntries:
 class FakeClient:
     """Client stub returning station capabilities."""
 
+    async def async_get_flag_descriptions(self):
+        """Return flag descriptions."""
+        return {"D": {"V": "Variable"}}
+
+    async def async_get_quality_descriptions(self):
+        """Return quality descriptions."""
+        return {0: "Good/Kvalitni hodnota", 5: "Unknown/Kvalita neznama"}
+
     async def async_get_station_capabilities(self, station_id: str):
         """Return station capabilities."""
         return ChmiStationCapabilities(

@@ -48,6 +48,9 @@ back to longer intervals when no shorter interval is advertised.
 Some stations advertise companion hourly elements even when the selected current
 observation interval is `10M`. When `meta2` advertises `SRA1H`, the integration
 can fetch the matching `1h` file and use that raw value for `Precipitation 1h`.
+When `meta2` advertises hourly SYNOP weather elements such as `ww`, `N`, `VV`,
+`Td`, `W1`, or `W2`, the integration can fetch the matching `1h` file and use
+those measured station values for the Home Assistant weather condition.
 
 `YYYYMMDD` is calculated from the current UTC day. If today's file is missing or
 does not contain usable rows, the API client tries yesterday's UTC file.
@@ -73,6 +76,36 @@ Assistant polling, the integration combines the current and previous UTC daily
 files before calculating `Precipitation today` for the Home Assistant local date.
 The parser also keeps the selected row's `QUALITY` and `FLAG` values for
 diagnostics.
+
+## Recent daily summaries
+
+Base URL:
+
+```text
+https://opendata.chmi.cz/meteorology/climate/recent/data/daily
+```
+
+File pattern:
+
+```text
+dly-{station_id}-{YYYYMM}.json
+```
+
+`YYYYMM` is selected from the last completed date in the Home Assistant local
+timezone. CHMI creates daily files after the day ends and the files contain
+station daily rows from the first day of the month through the latest published
+day.
+
+Observed header:
+
+```text
+STATION,ELEMENT,VTYPE,DT,VAL,FLAG,QUALITY
+```
+
+The integration reads the selected station rows for the last completed local
+date and exposes daily summary sensors for CHMI `SRA`, `TMA`, `TMI`, and `Fmax`
+when those values are present. It also sums usable `SRA` rows from the same
+monthly daily file up to that summary date for `CHMI month precipitation`.
 
 ## Station metadata
 
@@ -134,6 +167,12 @@ pressure `P` is not advertised for the selected interval.
 | Precipitation 10m | `SRA10M` |
 | Precipitation 1h | `SRA1H`, or derived from `SRA10M` |
 | Precipitation today | derived from `SRA10M` |
+| Yesterday precipitation | `SRA` from recent daily |
+| Yesterday temperature maximum | `TMA` from recent daily |
+| Yesterday temperature minimum | `TMI` from recent daily |
+| Yesterday wind gust maximum | `Fmax` from recent daily |
+| CHMI month precipitation | sum of `SRA` from recent daily |
+| Weather condition | `ww`, `N`, `VV`, `Td`, `W1`, `W2` from current/SYNOP data |
 | Wind speed | `F` |
 | Average wind speed | `Fprum` |
 | Wind gust | `Fmax` |
@@ -150,10 +189,18 @@ diagnostic sensor unless the station advertises `P` in `meta2`.
 Current observation rows include CHMI `FLAG` and `QUALITY` columns. The
 integration exposes these details only through Home Assistant diagnostics:
 
-- `quality_by_element`: selected `QUALITY` code and a short description for each
-  parsed element.
-- `flag_by_element`: selected `FLAG` value for each parsed element.
-- `quality_code_descriptions`: known quality-code descriptions.
+- `quality_by_element`: selected `QUALITY` code and the official CHMI `meta4`
+  description for each parsed element.
+- `flag_by_element`: selected `FLAG` value and the official CHMI `meta3`
+  description for each parsed element when CHMI publishes one.
+- `quality_code_descriptions`: current CHMI `meta4` quality-code descriptions.
 
-The data quality values are intentionally not exposed as regular sensor
-attributes to avoid high-churn state attributes.
+If the `meta4` file is temporarily unavailable during setup, the integration
+falls back to its built-in quality-code descriptions. If the `meta3` file is
+temporarily unavailable, flag descriptions are omitted but the raw selected
+`FLAG` values remain available in diagnostics.
+
+The data quality values are intentionally not exposed as regular sensors or
+regular sensor attributes. They describe the provenance and usability of source
+rows rather than a user-facing weather measurement, and exposing one sensor per
+element would create noisy entities that are better handled through diagnostics.

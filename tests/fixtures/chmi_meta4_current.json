@@ -1,0 +1,21 @@
+{
+  "zaznamID": "fixture-meta4",
+  "datovyZdrojID": "meteorologie",
+  "datovyTokID": "Open.Data.Metadata",
+  "datumVytvoreni": "2026-06-29T00:01:00.435Z",
+  "verzeDat": "1.0",
+  "data": {
+    "type": "DataCollection",
+    "data": {
+      "header": "FLAG2,DESCRIPTION",
+      "values": [
+        [0.0, "Good/Kvalitni hodnota"],
+        [1.0, "Suspect/Podezrela hodnota"],
+        [2.0, "Poor/Hodnota s nizkou kvalitou, podezrela, zatim nepouzivat"],
+        [3.0, "Estimated/Odhadnuta hodnota"],
+        [4.0, "Missing/Chybejici hodnota"],
+        [5.0, "Unknown/Kvalita neznama"]
+      ]
+    }
+  }
+}
