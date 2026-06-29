@@ -9,6 +9,8 @@
   radar products, image entities, and camera entities as non-goals.
 - Added CHMI `meta3` and `meta4` metadata loading so diagnostics include flag
   descriptions and official quality-code descriptions when available.
+- Documented that CHMI data-quality details stay in diagnostics instead of
+  separate disabled-by-default sensors.
 
 ## 0.1.6
 

@@ -18,12 +18,12 @@ products, image entities, or camera entities.
 - `QUALITY` and `FLAG` diagnostics for selected current observation rows,
   including CHMI `meta3` flag descriptions and `meta4` quality-code
   descriptions when available.
+- Data-quality details intentionally kept in diagnostics instead of regular
+  disabled-by-default sensors.
 - Tests, CI, and docs.
 
 ## TODO
 
-- Decide whether disabled-by-default data-quality sensors are useful after
-  diagnostics have enough detail.
 - Add official CHMI station recent/daily summary support where data is available:
   `yesterday_precipitation`, `yesterday_temperature_max`,
   `yesterday_temperature_min`, `yesterday_wind_gust_max`, and

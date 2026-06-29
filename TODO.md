@@ -4,8 +4,6 @@ This project only publishes measured CHMI station data into Home Assistant.
 
 ## Station Data
 
-- Decide whether disabled-by-default data-quality sensors are useful after
-  diagnostics are complete.
 - Add CHMI station recent/daily summaries where official station data is
   available:
   - `yesterday_precipitation`
