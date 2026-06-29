@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.2.2
+
+- Excluded `pytest-homeassistant-custom-component` from Dependabot version
+  updates so the Home Assistant stable test harness stays manually verified.
+- Documented that automated dependency PRs must be reviewed for semantic impact
+  before merging, especially Home Assistant stable/beta test harness updates.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
+- Migration: no user action required.
+- Breaking changes: none.
+
 ## 0.2.1
 
 - Cleaned project status documentation to describe the implemented station-data
