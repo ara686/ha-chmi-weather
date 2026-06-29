@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+## 0.2.0
+
+- Clarified that CHMI Weather is scoped only to measured station data published
+  into Home Assistant.
+- Removed the unused forecast source option from the integration options UI.
+- Added station-data TODO items and documented text forecasts, alerts/warnings,
+  radar products, image entities, and camera entities as non-goals.
+- Added CHMI `meta3` and `meta4` metadata loading so diagnostics include flag
+  descriptions and official quality-code descriptions when available.
+- Documented that CHMI data-quality details stay in diagnostics instead of
+  separate disabled-by-default sensors.
+- Added recent daily summary sensors from official CHMI `recent/data/daily`
+  files for yesterday precipitation, yesterday temperature maximum/minimum,
+  yesterday wind gust maximum, and CHMI month precipitation.
+- Improved the Home Assistant weather condition by using station-measured SYNOP
+  elements such as `ww`, `N`, `VV`, `Td`, `W1`, and `W2` when CHMI advertises
+  them.
+- Added parser validation fixtures for an additional CHMI station with pressure
+  and SYNOP `1H` elements.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
+- Migration: no user action required; station capabilities are refreshed during
+  setup, and new sensors appear when CHMI publishes matching station data.
+- Breaking changes: none.
+
 ## 0.1.6
 
 - Added current-station sensors for 10-minute temperature extrema, apparent

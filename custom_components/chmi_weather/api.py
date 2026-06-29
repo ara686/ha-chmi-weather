@@ -14,15 +14,23 @@ from .const import (
     CHMI_BASE_URL,
     CHMI_ELEMENT_BY_FIELD,
     CHMI_METADATA_BASE_URL,
+    CHMI_RECENT_DAILY_BASE_URL,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     ELEMENT_APPARENT_TEMPERATURE,
+    ELEMENT_CLOUD_COVERAGE,
+    ELEMENT_DAILY_PRECIPITATION,
+    ELEMENT_DEW_POINT,
     ELEMENT_HUMIDITY,
+    ELEMENT_PAST_WEATHER_1,
+    ELEMENT_PAST_WEATHER_2,
     ELEMENT_PRECIPITATION_1H,
     ELEMENT_PRECIPITATION_10M,
+    ELEMENT_PRESENT_WEATHER,
     ELEMENT_PRESSURE,
     ELEMENT_TEMPERATURE,
     ELEMENT_TEMPERATURE_MAX_10M,
     ELEMENT_TEMPERATURE_MIN_10M,
+    ELEMENT_VISIBILITY,
     ELEMENT_WIND_DIRECTION,
     ELEMENT_WIND_DIRECTION_AVG,
     ELEMENT_WIND_GUST,
@@ -30,8 +38,10 @@ from .const import (
     ELEMENT_WIND_SPEED,
     ELEMENT_WIND_SPEED_AVG,
     OBSERVATION_VALUE_FIELDS,
+    WEATHER_CONDITION_ELEMENTS,
 )
 from .models import (
+    ChmiDailySummary,
     ChmiNearestStation,
     ChmiObservation,
     ChmiPrecipitationSample,
@@ -69,12 +79,14 @@ class ChmiApiClient:
         *,
         base_url: str = CHMI_BASE_URL,
         metadata_base_url: str = CHMI_METADATA_BASE_URL,
+        recent_daily_base_url: str = CHMI_RECENT_DAILY_BASE_URL,
         timeout: int = DEFAULT_TIMEOUT_SECONDS,
     ) -> None:
         """Initialize the client."""
         self._session = session
         self._base_url = base_url.rstrip("/")
         self._metadata_base_url = metadata_base_url.rstrip("/")
+        self._recent_daily_base_url = recent_daily_base_url.rstrip("/")
         self._timeout = timeout
 
     async def async_get_current_observations(
@@ -84,6 +96,7 @@ class ChmiApiClient:
         interval_minutes: int = DEFAULT_OBSERVATION_INTERVAL_MINUTES,
         precipitation_timezone: tzinfo | None = None,
         precipitation_1h_interval_minutes: int | None = None,
+        weather_condition_interval_minutes: int | None = None,
     ) -> ChmiObservation:
         """Return current observations for a station, falling back to yesterday."""
         today = datetime.now(UTC).date()
@@ -116,20 +129,41 @@ class ChmiApiClient:
                     precipitation_date=datetime.now(precipitation_timezone).date(),
                 )
 
-            if (
-                precipitation_1h_interval_minutes is not None
-                and precipitation_1h_interval_minutes != interval_minutes
-            ):
-                hourly_observation = await self._async_get_optional_current_observation(
+            optional_observations: dict[int, ChmiObservation | None] = {}
+            if precipitation_1h_interval_minutes is not None:
+                optional_observations[precipitation_1h_interval_minutes] = None
+            if weather_condition_interval_minutes is not None:
+                optional_observations[weather_condition_interval_minutes] = None
+
+            for optional_interval_minutes in tuple(optional_observations):
+                if optional_interval_minutes == interval_minutes:
+                    optional_observations[optional_interval_minutes] = observation
+                    continue
+                optional_observations[
+                    optional_interval_minutes
+                ] = await self._async_get_optional_current_observation(
                     station_id,
                     today,
-                    interval_minutes=precipitation_1h_interval_minutes,
+                    interval_minutes=optional_interval_minutes,
                 )
-                if (
-                    hourly_observation is not None
-                    and hourly_observation.precipitation_1h is not None
-                ):
-                    _apply_observed_precipitation_1h(observation, hourly_observation)
+
+            precipitation_observation = optional_observations.get(
+                precipitation_1h_interval_minutes
+            )
+            if (
+                precipitation_observation is not None
+                and precipitation_observation.precipitation_1h is not None
+            ):
+                _apply_observed_precipitation_1h(observation, precipitation_observation)
+
+            weather_condition_observation = optional_observations.get(
+                weather_condition_interval_minutes
+            )
+            if weather_condition_observation is not None:
+                _apply_weather_condition_observation(
+                    observation,
+                    weather_condition_observation,
+                )
             return observation
 
         raise last_error or ChmiApiDataError("No usable CHMI observations found")
@@ -281,6 +315,76 @@ class ChmiApiClient:
         """Build a CHMI station capability metadata URL."""
         return f"{self._metadata_base_url}/meta2-{day:%Y%m%d}.json"
 
+    async def async_get_flag_descriptions(self) -> dict[str, dict[str, str]]:
+        """Return CHMI flag descriptions from current metadata."""
+        today = datetime.now(UTC).date()
+        last_error: ChmiApiError | None = None
+
+        for day in (today, today - timedelta(days=1)):
+            try:
+                return await self.async_get_flag_descriptions_for_date(day)
+            except (ChmiApiNotFoundError, ChmiApiDataError) as err:
+                last_error = err
+
+        raise last_error or ChmiApiDataError("No usable CHMI flag metadata found")
+
+    async def async_get_flag_descriptions_for_date(
+        self,
+        day: date,
+    ) -> dict[str, dict[str, str]]:
+        """Return CHMI flag descriptions from one UTC date."""
+        url = self._build_flag_descriptions_url(day)
+        payload = await self._async_get_json(url)
+        return parse_flag_descriptions(payload)
+
+    def _build_flag_descriptions_url(self, day: date) -> str:
+        """Build a CHMI flag description metadata URL."""
+        return f"{self._metadata_base_url}/meta3-{day:%Y%m%d}.json"
+
+    async def async_get_quality_descriptions(self) -> dict[int, str]:
+        """Return CHMI quality-code descriptions from current metadata."""
+        today = datetime.now(UTC).date()
+        last_error: ChmiApiError | None = None
+
+        for day in (today, today - timedelta(days=1)):
+            try:
+                return await self.async_get_quality_descriptions_for_date(day)
+            except (ChmiApiNotFoundError, ChmiApiDataError) as err:
+                last_error = err
+
+        raise last_error or ChmiApiDataError("No usable CHMI quality metadata found")
+
+    async def async_get_quality_descriptions_for_date(
+        self,
+        day: date,
+    ) -> dict[int, str]:
+        """Return CHMI quality-code descriptions from one UTC date."""
+        url = self._build_quality_descriptions_url(day)
+        payload = await self._async_get_json(url)
+        return parse_quality_descriptions(payload)
+
+    def _build_quality_descriptions_url(self, day: date) -> str:
+        """Build a CHMI quality description metadata URL."""
+        return f"{self._metadata_base_url}/meta4-{day:%Y%m%d}.json"
+
+    async def async_get_recent_daily_summary(
+        self,
+        station_id: str,
+        summary_date: date,
+    ) -> ChmiDailySummary:
+        """Return recent daily summary values for one station date."""
+        url = self._build_recent_daily_url(station_id, summary_date)
+        payload = await self._async_get_json(url)
+        return parse_recent_daily_summary(payload, station_id, summary_date)
+
+    def _build_recent_daily_url(self, station_id: str, month_date: date) -> str:
+        """Build a CHMI recent daily data URL for one station and month."""
+        normalized_station_id = _normalize_station_id(station_id)
+        return (
+            f"{self._recent_daily_base_url}/dly-{normalized_station_id}-"
+            f"{month_date:%Y%m}.json"
+        )
+
     async def _async_get_json(self, url: str) -> Mapping[str, Any]:
         """Fetch a JSON document."""
         try:
@@ -380,6 +484,12 @@ def parse_current_observations(
         wind_direction=_selected_value(selected, ELEMENT_WIND_DIRECTION),
         wind_direction_avg=_selected_value(selected, ELEMENT_WIND_DIRECTION_AVG),
         wind_gust_direction=_selected_value(selected, ELEMENT_WIND_GUST_DIRECTION),
+        cloud_coverage=_selected_value(selected, ELEMENT_CLOUD_COVERAGE),
+        dew_point=_selected_value(selected, ELEMENT_DEW_POINT),
+        visibility_code=_selected_value(selected, ELEMENT_VISIBILITY),
+        present_weather_code=_selected_value(selected, ELEMENT_PRESENT_WEATHER),
+        past_weather_code_1=_selected_value(selected, ELEMENT_PAST_WEATHER_1),
+        past_weather_code_2=_selected_value(selected, ELEMENT_PAST_WEATHER_2),
         precipitation_1h=precipitation_1h,
         precipitation_today=_precipitation_total(precipitation_samples),
         precipitation_samples=precipitation_samples,
@@ -556,6 +666,140 @@ def parse_station_capabilities(
     )
 
 
+def parse_flag_descriptions(payload: Mapping[str, Any]) -> dict[str, dict[str, str]]:
+    """Parse CHMI meta3 flag descriptions."""
+    values = _extract_values(payload)
+    if not values:
+        raise ChmiApiDataError("CHMI flag metadata does not contain rows")
+
+    indices = _extract_header_indices(payload)
+    descriptions: dict[str, dict[str, str]] = {}
+
+    for row in values:
+        if not _is_row(row):
+            continue
+
+        element = _as_str(_row_value(row, indices, "EL_ABBREVIATION", 0))
+        flag = _as_str(_row_value(row, indices, "FLAG", 1))
+        description = _as_str(_row_value(row, indices, "DESCRIPTION", 2))
+        if element is None or flag is None or description is None:
+            continue
+
+        descriptions.setdefault(element, {})[flag] = description
+
+    if not descriptions:
+        raise ChmiApiDataError("CHMI flag metadata has no usable descriptions")
+    return descriptions
+
+
+def parse_quality_descriptions(payload: Mapping[str, Any]) -> dict[int, str]:
+    """Parse CHMI meta4 quality-code descriptions."""
+    values = _extract_values(payload)
+    if not values:
+        raise ChmiApiDataError("CHMI quality metadata does not contain rows")
+
+    indices = _extract_header_indices(payload)
+    descriptions: dict[int, str] = {}
+
+    for row in values:
+        if not _is_row(row):
+            continue
+
+        code = _as_int(_row_value(row, indices, "FLAG2", 0))
+        description = _as_str(_row_value(row, indices, "DESCRIPTION", 1))
+        if code is None or description is None:
+            continue
+        descriptions[code] = description
+
+    if not descriptions:
+        raise ChmiApiDataError("CHMI quality metadata has no usable descriptions")
+    return descriptions
+
+
+def parse_recent_daily_summary(
+    payload: Mapping[str, Any],
+    station_id: str,
+    summary_date: date,
+) -> ChmiDailySummary:
+    """Parse CHMI recent daily data for one station summary date."""
+    normalized_station_id = _normalize_station_id(station_id)
+    values = _extract_values(payload)
+    if not values:
+        raise ChmiApiDataError("CHMI recent daily response does not contain rows")
+
+    indices = _extract_header_indices(payload)
+    selected: dict[str, tuple[datetime | None, float]] = {}
+    month_precipitation_values: list[float] = []
+
+    for row in values:
+        if not _is_row(row):
+            continue
+
+        station = _row_value(row, indices, "STATION", 0)
+        if str(station).strip() != normalized_station_id:
+            continue
+
+        element = _as_str(_row_value(row, indices, "ELEMENT", 1))
+        observed_at = _parse_datetime(_row_value(row, indices, "DT", 3))
+        value = _as_float(_row_value(row, indices, "VAL", 4))
+        if element is None or observed_at is None or value is None:
+            continue
+
+        observed_date = observed_at.date()
+        if (
+            element == ELEMENT_DAILY_PRECIPITATION
+            and observed_date.year == summary_date.year
+            and observed_date.month == summary_date.month
+            and observed_date <= summary_date
+        ):
+            month_precipitation_values.append(value)
+
+        if observed_date != summary_date:
+            continue
+        if element not in _DAILY_SUMMARY_ELEMENT_BY_FIELD.values():
+            continue
+
+        current = selected.get(element)
+        if current is None or _is_newer_or_equal(observed_at, current[0]):
+            selected[element] = (observed_at, value)
+
+    month_precipitation_chmi = (
+        round(sum(month_precipitation_values), 3)
+        if month_precipitation_values
+        else None
+    )
+    summary = ChmiDailySummary(
+        station_id=normalized_station_id,
+        summary_date=summary_date,
+        yesterday_precipitation=_daily_selected_value(
+            selected,
+            ELEMENT_DAILY_PRECIPITATION,
+        ),
+        yesterday_temperature_max=_daily_selected_value(
+            selected,
+            ELEMENT_TEMPERATURE_MAX_10M,
+        ),
+        yesterday_temperature_min=_daily_selected_value(
+            selected,
+            ELEMENT_TEMPERATURE_MIN_10M,
+        ),
+        yesterday_wind_gust_max=_daily_selected_value(selected, ELEMENT_WIND_GUST),
+        month_precipitation_chmi=month_precipitation_chmi,
+    )
+
+    if not _has_usable_daily_summary(summary):
+        raise ChmiApiDataError("CHMI recent daily response has no usable values")
+    return summary
+
+
+_DAILY_SUMMARY_ELEMENT_BY_FIELD = {
+    "yesterday_precipitation": ELEMENT_DAILY_PRECIPITATION,
+    "yesterday_temperature_max": ELEMENT_TEMPERATURE_MAX_10M,
+    "yesterday_temperature_min": ELEMENT_TEMPERATURE_MIN_10M,
+    "yesterday_wind_gust_max": ELEMENT_WIND_GUST,
+}
+
+
 def _normalize_station_id(station_id: str) -> str:
     normalized = station_id.strip()
     if not normalized or STATION_ID_PATTERN.fullmatch(normalized) is None:
@@ -713,6 +957,17 @@ def _as_float(value: Any) -> float | None:
         return None
 
 
+def _as_int(value: Any) -> int | None:
+    parsed = _as_float(value)
+    if parsed is None:
+        return None
+
+    code = int(parsed)
+    if parsed != code:
+        return None
+    return code
+
+
 def _as_str(value: Any) -> str | None:
     if value is None:
         return None
@@ -754,6 +1009,29 @@ def _selected_value(
     if item is None:
         return None
     return item[1]
+
+
+def _daily_selected_value(
+    selected: Mapping[str, tuple[datetime | None, float]],
+    element: str,
+) -> float | None:
+    item = selected.get(element)
+    if item is None:
+        return None
+    return item[1]
+
+
+def _has_usable_daily_summary(summary: ChmiDailySummary) -> bool:
+    return any(
+        value is not None
+        for value in (
+            summary.yesterday_precipitation,
+            summary.yesterday_temperature_max,
+            summary.yesterday_temperature_min,
+            summary.yesterday_wind_gust_max,
+            summary.month_precipitation_chmi,
+        )
+    )
 
 
 def _latest_observed_at(
@@ -875,4 +1153,33 @@ def _apply_observed_precipitation_1h(
         )
     observation.available_elements = tuple(
         sorted({*observation.available_elements, ELEMENT_PRECIPITATION_1H})
+    )
+
+
+def _apply_weather_condition_observation(
+    observation: ChmiObservation,
+    condition_observation: ChmiObservation,
+) -> None:
+    for element_field in (
+        "cloud_coverage",
+        "dew_point",
+        "visibility_code",
+        "present_weather_code",
+        "past_weather_code_1",
+        "past_weather_code_2",
+    ):
+        value = getattr(condition_observation, element_field)
+        if value is not None:
+            setattr(observation, element_field, value)
+    observation.available_elements = tuple(
+        sorted(
+            {
+                *observation.available_elements,
+                *(
+                    element
+                    for element in condition_observation.available_elements
+                    if element in WEATHER_CONDITION_ELEMENTS
+                ),
+            }
+        )
     )

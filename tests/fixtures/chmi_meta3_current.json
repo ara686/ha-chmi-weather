@@ -1,0 +1,18 @@
+{
+  "zaznamID": "fixture-meta3",
+  "datovyZdrojID": "meteorologie",
+  "datovyTokID": "Open.Data.Metadata",
+  "datumVytvoreni": "2026-06-29T00:01:00.435Z",
+  "verzeDat": "1.0",
+  "data": {
+    "type": "DataCollection",
+    "data": {
+      "header": "EL_ABBREVIATION,FLAG,DESCRIPTION",
+      "values": [
+        ["D", "V", "Variable"],
+        ["Dmax", "V", "Variable"],
+        ["SCE", "A", "Ovlivneno umelym snezenim"]
+      ]
+    }
+  }
+}

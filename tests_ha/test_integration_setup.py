@@ -12,7 +12,6 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components import chmi_weather
 from custom_components.chmi_weather.const import (
     CONF_DIAGNOSTIC_SENSORS,
-    CONF_FORECAST_SOURCE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_OBSERVATION_INTERVAL_MINUTES,
@@ -21,10 +20,10 @@ from custom_components.chmi_weather.const import (
     CONF_SUPPORTED_ELEMENTS,
     CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
-    DEFAULT_FORECAST_SOURCE,
     DOMAIN,
 )
 from custom_components.chmi_weather.models import (
+    ChmiDailySummary,
     ChmiObservation,
     ChmiStationCapabilities,
 )
@@ -40,6 +39,30 @@ class FakeChmiApiClient:
     def __init__(self, session: Any) -> None:
         """Initialize fake client."""
         self.session = session
+
+    async def async_get_flag_descriptions(self) -> dict[str, dict[str, str]]:
+        """Return CHMI flag descriptions."""
+        return {"D": {"V": "Variable"}}
+
+    async def async_get_quality_descriptions(self) -> dict[int, str]:
+        """Return CHMI quality-code descriptions."""
+        return {0: "Good/Kvalitni hodnota", 5: "Unknown/Kvalita neznama"}
+
+    async def async_get_recent_daily_summary(
+        self,
+        station_id: str,
+        summary_date,
+    ) -> ChmiDailySummary:
+        """Return recent daily summary values."""
+        return ChmiDailySummary(
+            station_id=station_id,
+            summary_date=summary_date,
+            yesterday_precipitation=0.8,
+            yesterday_temperature_max=30.4,
+            yesterday_temperature_min=13.2,
+            yesterday_wind_gust_max=6.8,
+            month_precipitation_chmi=3.4,
+        )
 
     async def async_get_station_capabilities(
         self,
@@ -90,10 +113,12 @@ class FakeChmiApiClient:
         interval_minutes: int,
         precipitation_timezone,
         precipitation_1h_interval_minutes,
+        weather_condition_interval_minutes,
     ) -> ChmiObservation:
         """Return a current observation."""
         assert interval_minutes == 10
         assert precipitation_1h_interval_minutes == 60
+        assert weather_condition_interval_minutes is None
         return ChmiObservation(
             station_id=station_id,
             observed_at=datetime(2026, 6, 26, 8, 50, tzinfo=UTC),
@@ -147,7 +172,6 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
         options={
             CONF_UPDATE_INTERVAL: 10,
             CONF_DIAGNOSTIC_SENSORS: True,
-            CONF_FORECAST_SOURCE: DEFAULT_FORECAST_SOURCE,
         },
     )
     entry.add_to_hass(hass)
@@ -165,6 +189,21 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     )
     precipitation_today_state = hass.states.get(
         "sensor.chmi_dobrichovice_precipitation_today"
+    )
+    yesterday_precipitation_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_precipitation"
+    )
+    yesterday_temperature_max_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_temperature_maximum"
+    )
+    yesterday_temperature_min_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_temperature_minimum"
+    )
+    yesterday_wind_gust_max_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_wind_gust_maximum"
+    )
+    month_precipitation_state = hass.states.get(
+        "sensor.chmi_dobrichovice_chmi_month_precipitation"
     )
     wind_speed_state = hass.states.get("sensor.chmi_dobrichovice_wind_speed")
     wind_speed_avg_state = hass.states.get(
@@ -208,6 +247,11 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
         "60": ["SRA1H"],
     }
     assert entry.data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
+    assert entry.runtime_data.flag_descriptions == {"D": {"V": "Variable"}}
+    assert entry.runtime_data.quality_descriptions == {
+        0: "Good/Kvalitni hodnota",
+        5: "Unknown/Kvalita neznama",
+    }
     assert weather_state is not None
     assert weather_state.state == "partlycloudy"
     assert temperature_state is not None
@@ -218,6 +262,16 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     assert precipitation_hour_state.state == "1.2"
     assert precipitation_today_state is not None
     assert precipitation_today_state.state == "4.8"
+    assert yesterday_precipitation_state is not None
+    assert yesterday_precipitation_state.state == "0.8"
+    assert yesterday_temperature_max_state is not None
+    assert yesterday_temperature_max_state.state == "30.4"
+    assert yesterday_temperature_min_state is not None
+    assert yesterday_temperature_min_state.state == "13.2"
+    assert yesterday_wind_gust_max_state is not None
+    assert yesterday_wind_gust_max_state.state == "24.48"
+    assert month_precipitation_state is not None
+    assert month_precipitation_state.state == "3.4"
     assert wind_speed_state is not None
     assert wind_speed_state.state == "4.68"
     assert wind_speed_avg_state is not None

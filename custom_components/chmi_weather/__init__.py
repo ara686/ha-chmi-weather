@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import ChmiApiClient, ChmiApiError
 from .const import (
+    CHMI_QUALITY_DESCRIPTIONS,
     CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_SUPPORTED_ELEMENTS,
@@ -27,6 +28,8 @@ class ChmiWeatherRuntimeData:
 
     client: ChmiApiClient
     coordinator: ChmiDataUpdateCoordinator
+    flag_descriptions: dict[str, dict[str, str]]
+    quality_descriptions: dict[int, str]
 
 
 type ChmiWeatherConfigEntry = ConfigEntry[ChmiWeatherRuntimeData]
@@ -40,12 +43,16 @@ async def async_setup_entry(
     session = async_get_clientsession(hass)
     client = ChmiApiClient(session)
     await _async_refresh_station_capabilities(hass, entry, client)
+    flag_descriptions = await _async_get_flag_descriptions(client)
+    quality_descriptions = await _async_get_quality_descriptions(client)
     coordinator = ChmiDataUpdateCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = ChmiWeatherRuntimeData(
         client=client,
         coordinator=coordinator,
+        flag_descriptions=flag_descriptions,
+        quality_descriptions=quality_descriptions,
     )
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
@@ -113,3 +120,23 @@ async def _async_refresh_station_capabilities(
             ),
         },
     )
+
+
+async def _async_get_flag_descriptions(
+    client: ChmiApiClient,
+) -> dict[str, dict[str, str]]:
+    """Return CHMI flag descriptions without blocking setup on metadata errors."""
+    try:
+        return await client.async_get_flag_descriptions()
+    except ChmiApiError:
+        return {}
+
+
+async def _async_get_quality_descriptions(
+    client: ChmiApiClient,
+) -> dict[int, str]:
+    """Return CHMI quality descriptions without blocking setup on metadata errors."""
+    try:
+        return await client.async_get_quality_descriptions()
+    except ChmiApiError:
+        return dict(CHMI_QUALITY_DESCRIPTIONS)

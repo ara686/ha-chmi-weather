@@ -18,7 +18,6 @@ from .api import (
 )
 from .const import (
     CONF_DIAGNOSTIC_SENSORS,
-    CONF_FORECAST_SOURCE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_OBSERVATION_INTERVAL_MINUTES,
@@ -28,7 +27,6 @@ from .const import (
     CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_SENSORS,
-    DEFAULT_FORECAST_SOURCE,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DEFAULT_STATION_SELECTION_LIMIT,
     DOMAIN,
@@ -101,7 +99,6 @@ class ChmiWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 data
                             ),
                             CONF_DIAGNOSTIC_SENSORS: DEFAULT_DIAGNOSTIC_SENSORS,
-                            CONF_FORECAST_SOURCE: DEFAULT_FORECAST_SOURCE,
                         },
                     )
 
@@ -172,13 +169,6 @@ class ChmiWeatherOptionsFlow(config_entries.OptionsFlow):
                             DEFAULT_DIAGNOSTIC_SENSORS,
                         ),
                     ): bool,
-                    vol.Required(
-                        CONF_FORECAST_SOURCE,
-                        default=options.get(
-                            CONF_FORECAST_SOURCE,
-                            DEFAULT_FORECAST_SOURCE,
-                        ),
-                    ): vol.In([DEFAULT_FORECAST_SOURCE]),
                 }
             ),
         )

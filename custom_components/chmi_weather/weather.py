@@ -128,7 +128,108 @@ class ChmiWeatherEntity(CoordinatorEntity[ChmiDataUpdateCoordinator], WeatherEnt
 
 
 def condition_from_observation(observation: ChmiObservation) -> str:
-    """Return a best-effort HA condition until a better CHMI condition source exists."""
+    """Return a best-effort HA condition from measured station elements."""
+    present_weather = _condition_from_present_weather(
+        _int_code(observation.present_weather_code)
+    )
+    if present_weather is not None:
+        return present_weather
+
     if observation.precipitation_10m is not None and observation.precipitation_10m > 0:
         return "rainy"
+
+    if _is_low_visibility(observation.visibility_code) or _is_near_saturation(
+        observation
+    ):
+        return "fog"
+
+    cloud_condition = _condition_from_cloud_coverage(
+        _int_code(observation.cloud_coverage)
+    )
+    if cloud_condition is not None:
+        return cloud_condition
+
+    past_weather = _condition_from_past_weather(
+        _int_code(observation.past_weather_code_1)
+    ) or _condition_from_past_weather(_int_code(observation.past_weather_code_2))
+    if past_weather is not None:
+        return past_weather
+
     return "partlycloudy"
+
+
+def _int_code(value: float | None) -> int | None:
+    if value is None:
+        return None
+
+    code = int(value)
+    if value != code:
+        return None
+    return code
+
+
+def _condition_from_present_weather(code: int | None) -> str | None:
+    if code is None:
+        return None
+    if code in {4, 5, 10, 11, 12, 28} or 40 <= code <= 49:
+        return "fog"
+    if code in {13, 17}:
+        return "lightning"
+    if code == 18:
+        return "windy"
+    if 30 <= code <= 39:
+        return "windy"
+    if code in {20, 21, 24, 25} or 50 <= code <= 59:
+        return "pouring" if code in {58, 59} else "rainy"
+    if 60 <= code <= 67:
+        return "pouring" if code in {63, 64, 65, 66, 67} else "rainy"
+    if code in {22, 26} or 70 <= code <= 79 or 85 <= code <= 86:
+        return "snowy"
+    if code in {23, 68, 69, 83, 84}:
+        return "snowy-rainy"
+    if 80 <= code <= 82:
+        return "pouring" if code == 82 else "rainy"
+    if code in {27} or 87 <= code <= 90:
+        return "hail"
+    if code == 29 or 91 <= code <= 99:
+        return "lightning-rainy"
+    return None
+
+
+def _condition_from_cloud_coverage(code: int | None) -> str | None:
+    if code is None:
+        return None
+    if code <= 0:
+        return "sunny"
+    if code <= 5:
+        return "partlycloudy"
+    return "cloudy"
+
+
+def _condition_from_past_weather(code: int | None) -> str | None:
+    if code is None:
+        return None
+    if code == 4:
+        return "fog"
+    if code in {5, 6, 8}:
+        return "rainy"
+    if code == 7:
+        return "snowy"
+    if code == 9:
+        return "lightning-rainy"
+    return None
+
+
+def _is_low_visibility(visibility_code: float | None) -> bool:
+    code = _int_code(visibility_code)
+    return code is not None and code <= 10
+
+
+def _is_near_saturation(observation: ChmiObservation) -> bool:
+    return (
+        observation.temperature is not None
+        and observation.dew_point is not None
+        and observation.humidity is not None
+        and observation.humidity >= 95
+        and abs(observation.temperature - observation.dew_point) <= 1
+    )

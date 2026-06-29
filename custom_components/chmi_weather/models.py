@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 
 
 @dataclass(slots=True, frozen=True)
@@ -33,14 +33,39 @@ class ChmiObservation:
     wind_speed_avg: float | None = None
     wind_direction_avg: float | None = None
     wind_gust_direction: float | None = None
+    cloud_coverage: float | None = None
+    dew_point: float | None = None
+    visibility_code: float | None = None
+    present_weather_code: float | None = None
+    past_weather_code_1: float | None = None
+    past_weather_code_2: float | None = None
     precipitation_1h: float | None = None
     precipitation_today: float | None = None
+    daily_summary_date: date | None = None
+    yesterday_precipitation: float | None = None
+    yesterday_temperature_max: float | None = None
+    yesterday_temperature_min: float | None = None
+    yesterday_wind_gust_max: float | None = None
+    month_precipitation_chmi: float | None = None
     precipitation_samples: tuple[ChmiPrecipitationSample, ...] = field(
         default_factory=tuple
     )
     available_elements: tuple[str, ...] = field(default_factory=tuple)
     quality_by_element: dict[str, float | None] = field(default_factory=dict)
     flag_by_element: dict[str, str | None] = field(default_factory=dict)
+
+
+@dataclass(slots=True, frozen=True)
+class ChmiDailySummary:
+    """Normalized recent daily station summary from CHMI OpenData."""
+
+    station_id: str
+    summary_date: date
+    yesterday_precipitation: float | None
+    yesterday_temperature_max: float | None
+    yesterday_temperature_min: float | None
+    yesterday_wind_gust_max: float | None
+    month_precipitation_chmi: float | None
 
 
 @dataclass(slots=True)

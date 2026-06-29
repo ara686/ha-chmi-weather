@@ -35,8 +35,7 @@
         "title": "Moznosti CHMI Weather",
         "data": {
           "update_interval_minutes": "Interval aktualizace v minutach",
-          "diagnostic_sensors": "Zapnout diagnosticke senzory",
-          "forecast_source": "Zdroj predpovedi"
+          "diagnostic_sensors": "Zapnout diagnosticke senzory"
         }
       }
     }
@@ -69,6 +68,21 @@
       },
       "precipitation_today": {
         "name": "Srazky dnes"
+      },
+      "yesterday_precipitation": {
+        "name": "Srazky vcera"
+      },
+      "yesterday_temperature_max": {
+        "name": "Vcerajsi teplotni maximum"
+      },
+      "yesterday_temperature_min": {
+        "name": "Vcerajsi teplotni minimum"
+      },
+      "yesterday_wind_gust_max": {
+        "name": "Vcerajsi maximum narazu vetru"
+      },
+      "month_precipitation_chmi": {
+        "name": "Mesicni srazky CHMI"
       },
       "wind_speed": {
         "name": "Rychlost vetru"
