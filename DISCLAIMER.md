@@ -5,9 +5,10 @@ development.
 
 ## Development Status
 
-This integration is not recommended for production use. APIs, entity behavior,
-configuration flow, diagnostics, and supported station data may change without
-notice until the project reaches a stable release.
+The current station-data scope is implemented, but this integration is still
+being validated across multiple Home Assistant installations. It is not
+recommended for production use. Entity behavior, configuration flow, diagnostics,
+and supported station data may still change between test releases.
 
 Use this software only if you are comfortable testing custom Home Assistant
 integrations and reviewing Home Assistant logs when something breaks.

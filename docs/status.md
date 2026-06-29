@@ -1,10 +1,8 @@
-# Roadmap
+# Status and Scope
 
-CHMI Weather is scoped to measured CHMI station data published into Home
-Assistant. It should not implement CHMI text forecasts, alerts/warnings, radar
-products, image entities, or camera entities.
+CHMI Weather publishes measured CHMI station data into Home Assistant.
 
-## Done
+## Implemented Station-Data Scope
 
 - HACS-ready custom integration structure.
 - UI config flow with nearest-station selection from official `meta1` station
@@ -14,6 +12,7 @@ products, image entities, or camera entities.
 - Weather entity and station-supported diagnostic sensors.
 - Current station values from official `now/data` files.
 - Station element capability filtering from official `meta2` metadata.
+- Shortest advertised station observation interval selection.
 - `SRA1H` support for hourly precipitation when the station advertises it.
 - `QUALITY` and `FLAG` diagnostics for selected current observation rows,
   including CHMI `meta3` flag descriptions and `meta4` quality-code
@@ -27,11 +26,7 @@ products, image entities, or camera entities.
   advertised, including `ww`, `N`, `VV`, `Td`, `W1`, and `W2`.
 - Parser validation fixtures for additional station examples beyond
   Dobrichovice, including a station with pressure and SYNOP `1H` elements.
-- Tests, CI, and docs.
-
-## TODO
-
-- No open station-data items currently.
+- Tests, CI, and documentation.
 
 ## Non-Goals
 

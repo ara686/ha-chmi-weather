@@ -2,13 +2,17 @@
 
 ## Unreleased
 
+- Cleaned project status documentation to describe the implemented station-data
+  scope while keeping the experimental non-production warning.
+
 ## 0.2.0
 
 - Clarified that CHMI Weather is scoped only to measured station data published
   into Home Assistant.
 - Removed the unused forecast source option from the integration options UI.
-- Added station-data TODO items and documented text forecasts, alerts/warnings,
-  radar products, image entities, and camera entities as non-goals.
+- Added station-data scope documentation and documented text forecasts,
+  alerts/warnings, radar products, image entities, and camera entities as
+  non-goals.
 - Added CHMI `meta3` and `meta4` metadata loading so diagnostics include flag
   descriptions and official quality-code descriptions when available.
 - Documented that CHMI data-quality details stay in diagnostics instead of
@@ -103,7 +107,7 @@
 
 ## 0.1.0
 
-- Initial MVP scaffold for CHMI Weather.
+- Initial custom integration scaffold for CHMI Weather.
 - Added CHMI OpenData current-observation parser and async API client.
 - Added Home Assistant config flow, DataUpdateCoordinator, weather entity,
   diagnostic sensors, diagnostics, tests, docs, and CI.

@@ -4,9 +4,9 @@ CHMI Weather is intentionally small and async-first. Home Assistant entity
 modules should expose coordinator data and avoid parsing, HTTP calls, or data
 normalization.
 
-This project is a development-preview custom integration. Keep public-facing
-documentation explicit that it is not recommended for production use and that
-users install it at their own risk.
+This project is an experimental custom integration with the current station-data
+scope implemented. Keep public-facing documentation explicit that it is not
+recommended for production use and that users install it at their own risk.
 
 ## Local setup
 
