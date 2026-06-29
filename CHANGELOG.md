@@ -4,6 +4,8 @@
 
 - Excluded `pytest-homeassistant-custom-component` from Dependabot version
   updates so the Home Assistant stable test harness stays manually verified.
+- Documented that automated dependency PRs must be reviewed for semantic impact
+  before merging, especially Home Assistant stable/beta test harness updates.
 
 ## 0.2.1
 

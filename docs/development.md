@@ -55,6 +55,24 @@ Dependabot version updates because newer package releases can point at Home
 Assistant beta builds. Update the `ha-stable` pin manually only after confirming
 that the package maps to the latest stable Home Assistant release.
 
+### Automated Dependency PRs
+
+Review every automated dependency PR before merging. Do not merge Dependabot or
+GitHub Actions update PRs solely because CI is green. Check the diff, release
+notes, changed dependency role, and whether the update changes the meaning of a
+test job.
+
+For Home Assistant compatibility dependencies, preserve the split between
+stable and beta coverage:
+
+- `ha-stable` uses the manually verified stable Home Assistant test harness pin.
+- `ha-beta` intentionally installs the latest available beta/pre-release test
+  harness with `--pre`.
+- If an automated PR would move the stable harness to a beta Home Assistant
+  version, close it and keep the stable pin unchanged.
+- Update `ha-stable` manually only after verifying the package maps to the
+  latest Home Assistant stable release.
+
 Run the beta/pre-release check before deployment-oriented changes and when Home
 Assistant publishes a beta:
 
