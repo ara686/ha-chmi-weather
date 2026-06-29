@@ -23,6 +23,9 @@ from custom_components.chmi_weather.api import (
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current.json"
+HOURLY_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current_1h.json"
+)
 METADATA_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_meta1_current.json"
 CAPABILITIES_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_meta2_current.json"
@@ -32,6 +35,10 @@ STATION_ID = "0-203-0-11521"
 
 def _fixture() -> dict:
     return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _hourly_fixture() -> dict:
+    return json.loads(HOURLY_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _metadata_fixture() -> dict:
@@ -52,13 +59,21 @@ def test_parser_selects_latest_valid_values() -> None:
     assert observation.station_id == STATION_ID
     assert observation.observed_at.isoformat() == "2026-06-26T08:50:00+00:00"
     assert observation.temperature == 32.7
+    assert observation.temperature_max_10m == 33.0
+    assert observation.temperature_min_10m == 31.8
+    assert observation.apparent_temperature == 25.0
     assert observation.humidity == 37.0
     assert observation.pressure is None
     assert observation.precipitation_10m == 0.0
     assert observation.wind_speed == 1.3
+    assert observation.wind_speed_avg == 1.1
     assert observation.wind_gust == 2.9
     assert observation.wind_direction == 222.0
+    assert observation.wind_direction_avg == 218.0
+    assert observation.wind_gust_direction == 200.0
     assert "TPM" in observation.available_elements
+    assert observation.quality_by_element["T"] == 5.0
+    assert observation.flag_by_element["T"] is None
 
 
 def test_parser_calculates_precipitation_totals() -> None:
@@ -88,6 +103,17 @@ def test_parser_calculates_precipitation_totals() -> None:
         ("2026-06-26T08:10:00+00:00", 0.5),
         ("2026-06-26T08:50:00+00:00", 0.2),
     ]
+
+
+def test_parser_reads_observed_hourly_precipitation() -> None:
+    observation = parse_current_observations(_hourly_fixture(), STATION_ID)
+
+    assert observation.observed_at.isoformat() == "2026-06-26T09:00:00+00:00"
+    assert observation.precipitation_1h == 2.1
+    assert observation.precipitation_10m is None
+    assert observation.precipitation_today is None
+    assert observation.precipitation_samples == ()
+    assert observation.quality_by_element["SRA1H"] == 5.0
 
 
 def test_api_client_calculates_precipitation_today_for_local_date(
@@ -151,6 +177,49 @@ def test_api_client_calculates_precipitation_today_for_local_date(
     assert client.days == [date(2026, 6, 29), date(2026, 6, 28)]
     assert observation.precipitation_today == 4.7
     assert observation.precipitation_10m == 0.0
+
+
+def test_api_client_prefers_companion_hourly_precipitation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 26, 9, 30, tzinfo=tz or UTC)
+
+    class PayloadClient(ChmiApiClient):
+        def __init__(self):
+            super().__init__(session=object())
+            self.calls = []
+
+        async def async_get_current_observations_for_date(
+            self,
+            station_id: str,
+            day: date,
+            *,
+            interval_minutes: int = 10,
+        ):
+            self.calls.append((day, interval_minutes))
+            if interval_minutes == 60:
+                return parse_current_observations(_hourly_fixture(), station_id)
+            return parse_current_observations(_fixture(), station_id)
+
+    client = PayloadClient()
+    monkeypatch.setattr(api, "datetime", FrozenDatetime)
+
+    observation = asyncio.run(
+        client.async_get_current_observations(
+            STATION_ID,
+            precipitation_1h_interval_minutes=60,
+        )
+    )
+
+    assert observation.precipitation_1h == 2.1
+    assert observation.precipitation_10m == 0.0
+    assert observation.available_elements[-1] == "TPM"
+    assert "SRA1H" in observation.available_elements
+    assert observation.quality_by_element["SRA1H"] == 5.0
+    assert client.calls == [(date(2026, 6, 26), 10), (date(2026, 6, 26), 60)]
 
 
 def test_parser_ignores_none_and_empty_values() -> None:
@@ -273,8 +342,29 @@ def test_parser_reads_station_capabilities() -> None:
     assert "F" in capabilities.supported_elements
     assert "Fmax" in capabilities.supported_elements
     assert "H" in capabilities.supported_elements
+    assert "TMA" in capabilities.supported_elements
+    assert "TMI" in capabilities.supported_elements
+    assert "TPM" in capabilities.supported_elements
+    assert "Dmax" in capabilities.supported_elements
+    assert "Dprum" in capabilities.supported_elements
+    assert "Fprum" in capabilities.supported_elements
     assert "P" not in capabilities.supported_elements
     assert "SRA1H" not in capabilities.supported_elements
+    assert capabilities.supported_elements_by_interval[10] == (
+        "D",
+        "Dmax",
+        "Dprum",
+        "F",
+        "Fmax",
+        "Fprum",
+        "H",
+        "SRA10M",
+        "T",
+        "TMA",
+        "TMI",
+        "TPM",
+    )
+    assert capabilities.supported_elements_by_interval[60] == ("SRA1H",)
 
 
 def test_parser_falls_back_to_hourly_station_capabilities() -> None:
@@ -288,6 +378,7 @@ def test_parser_falls_back_to_hourly_station_capabilities() -> None:
     assert capabilities.observation_type == "1H"
     assert capabilities.observation_interval_minutes == 60
     assert capabilities.supported_elements == ("SRA1H",)
+    assert capabilities.supported_elements_by_interval == {60: ("SRA1H",)}
 
 
 def test_parser_rejects_missing_station_capabilities() -> None:

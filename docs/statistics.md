@@ -9,12 +9,19 @@ Use Home Assistant statistics cards or Statistics helpers for extrema and
 averages from current measured sensors:
 
 - Temperature
+- Temperature maximum 10m
+- Temperature minimum 10m
+- Apparent temperature
 - Humidity
 - Pressure, when advertised by the selected station
 - Wind speed
+- Average wind speed
 - Wind gust
 - Wind direction
+- Average wind direction
+- Wind gust direction
 - Precipitation 10m
+- Precipitation 1h
 - Precipitation today
 
 Common useful characteristics are `value_max`, `value_min`, `mean`,
@@ -67,11 +74,11 @@ utility_meter:
 ## Direct rainfall sensors
 
 The integration exposes three rainfall sensors when the selected station
-advertises `SRA10M`:
+advertises the matching CHMI elements:
 
 - `Precipitation 10m`: raw latest `SRA10M` interval value.
-- `Precipitation 1h`: rolling sum of the latest hour available in the selected
-  current-observation files.
+- `Precipitation 1h`: raw latest `SRA1H` value when advertised by the station,
+  otherwise a rolling sum of the latest hour available from `SRA10M`.
 - `Precipitation today`: cumulative sum for the current Home Assistant local
   date, intended as the Utility Meter source for calendar cycles.
 

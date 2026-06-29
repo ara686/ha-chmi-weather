@@ -1,0 +1,17 @@
+{
+  "zaznamID": "fixture-hourly",
+  "datovyZdrojID": "meteorologie",
+  "datovyTokID": "Open.Data.1H",
+  "datumVytvoreni": "2026-06-26T09:07:48.508Z",
+  "verzeDat": "1.0",
+  "data": {
+    "type": "DataCollection",
+    "data": {
+      "header": "STATION,ELEMENT,DT,VAL,FLAG,QUALITY",
+      "values": [
+        ["0-203-0-11521", "SRA1H", "2026-06-26T08:00:00Z", 1.4, "", 5.0],
+        ["0-203-0-11521", "SRA1H", "2026-06-26T09:00:00Z", 2.1, "", 5.0]
+      ]
+    }
+  }
+}

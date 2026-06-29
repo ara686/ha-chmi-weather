@@ -25,6 +25,7 @@ from .const import (
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_SENSORS,
     DEFAULT_FORECAST_SOURCE,
@@ -324,6 +325,11 @@ async def _validate_and_enrich_user_input(
         pass
     else:
         enriched_data[CONF_SUPPORTED_ELEMENTS] = list(capabilities.supported_elements)
+        elements_by_interval = capabilities.supported_elements_by_interval
+        enriched_data[CONF_SUPPORTED_ELEMENTS_BY_INTERVAL] = {
+            str(interval): list(elements)
+            for interval, elements in elements_by_interval.items()
+        }
         enriched_data[CONF_OBSERVATION_INTERVAL_MINUTES] = (
             capabilities.observation_interval_minutes
         )

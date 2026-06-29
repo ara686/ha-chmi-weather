@@ -46,6 +46,15 @@
       "temperature": {
         "name": "Temperature"
       },
+      "temperature_max_10m": {
+        "name": "Temperature maximum 10m"
+      },
+      "temperature_min_10m": {
+        "name": "Temperature minimum 10m"
+      },
+      "apparent_temperature": {
+        "name": "Apparent temperature"
+      },
       "humidity": {
         "name": "Humidity"
       },
@@ -64,11 +73,20 @@
       "wind_speed": {
         "name": "Wind speed"
       },
+      "wind_speed_avg": {
+        "name": "Average wind speed"
+      },
       "wind_gust": {
         "name": "Wind gust"
       },
       "wind_direction": {
         "name": "Wind direction"
+      },
+      "wind_direction_avg": {
+        "name": "Average wind direction"
+      },
+      "wind_gust_direction": {
+        "name": "Wind gust direction"
       },
       "observation_time": {
         "name": "Observation time"

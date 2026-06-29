@@ -19,6 +19,7 @@ from custom_components.chmi_weather.const import (
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
     DEFAULT_FORECAST_SOURCE,
     DOMAIN,
@@ -47,9 +48,39 @@ class FakeChmiApiClient:
         """Return station capabilities."""
         return ChmiStationCapabilities(
             station_id=station_id,
-            supported_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
+            supported_elements=(
+                "D",
+                "Dmax",
+                "Dprum",
+                "F",
+                "Fmax",
+                "Fprum",
+                "H",
+                "SRA10M",
+                "T",
+                "TMA",
+                "TMI",
+                "TPM",
+            ),
             observation_type="10M",
             observation_interval_minutes=10,
+            supported_elements_by_interval={
+                10: (
+                    "D",
+                    "Dmax",
+                    "Dprum",
+                    "F",
+                    "Fmax",
+                    "Fprum",
+                    "H",
+                    "SRA10M",
+                    "T",
+                    "TMA",
+                    "TMI",
+                    "TPM",
+                ),
+                60: ("SRA1H",),
+            },
         )
 
     async def async_get_current_observations(
@@ -58,9 +89,11 @@ class FakeChmiApiClient:
         *,
         interval_minutes: int,
         precipitation_timezone,
+        precipitation_1h_interval_minutes,
     ) -> ChmiObservation:
         """Return a current observation."""
         assert interval_minutes == 10
+        assert precipitation_1h_interval_minutes == 60
         return ChmiObservation(
             station_id=station_id,
             observed_at=datetime(2026, 6, 26, 8, 50, tzinfo=UTC),
@@ -71,9 +104,28 @@ class FakeChmiApiClient:
             wind_speed=1.3,
             wind_gust=2.9,
             wind_direction=222.0,
+            temperature_max_10m=33.0,
+            temperature_min_10m=31.8,
+            apparent_temperature=25.0,
+            wind_speed_avg=1.1,
+            wind_direction_avg=218.0,
+            wind_gust_direction=200.0,
             precipitation_1h=1.2,
             precipitation_today=4.8,
-            available_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
+            available_elements=(
+                "D",
+                "Dmax",
+                "Dprum",
+                "F",
+                "Fmax",
+                "Fprum",
+                "H",
+                "SRA10M",
+                "T",
+                "TMA",
+                "TMI",
+                "TPM",
+            ),
         )
 
 
@@ -105,6 +157,9 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
 
     weather_state = hass.states.get("weather.chmi_dobrichovice")
     temperature_state = hass.states.get("sensor.chmi_dobrichovice_temperature")
+    apparent_temperature_state = hass.states.get(
+        "sensor.chmi_dobrichovice_apparent_temperature"
+    )
     precipitation_hour_state = hass.states.get(
         "sensor.chmi_dobrichovice_precipitation_1h"
     )
@@ -112,21 +167,63 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
         "sensor.chmi_dobrichovice_precipitation_today"
     )
     wind_speed_state = hass.states.get("sensor.chmi_dobrichovice_wind_speed")
+    wind_speed_avg_state = hass.states.get(
+        "sensor.chmi_dobrichovice_average_wind_speed"
+    )
+    wind_gust_direction_state = hass.states.get(
+        "sensor.chmi_dobrichovice_wind_gust_direction"
+    )
     pressure_state = hass.states.get("sensor.chmi_dobrichovice_pressure")
 
     assert entry.runtime_data.coordinator.data is not None
-    assert entry.data[CONF_SUPPORTED_ELEMENTS] == ["D", "F", "Fmax", "H", "SRA10M", "T"]
+    assert entry.data[CONF_SUPPORTED_ELEMENTS] == [
+        "D",
+        "Dmax",
+        "Dprum",
+        "F",
+        "Fmax",
+        "Fprum",
+        "H",
+        "SRA10M",
+        "T",
+        "TMA",
+        "TMI",
+        "TPM",
+    ]
+    assert entry.data[CONF_SUPPORTED_ELEMENTS_BY_INTERVAL] == {
+        "10": [
+            "D",
+            "Dmax",
+            "Dprum",
+            "F",
+            "Fmax",
+            "Fprum",
+            "H",
+            "SRA10M",
+            "T",
+            "TMA",
+            "TMI",
+            "TPM",
+        ],
+        "60": ["SRA1H"],
+    }
     assert entry.data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
     assert weather_state is not None
     assert weather_state.state == "partlycloudy"
     assert temperature_state is not None
     assert temperature_state.state == "32.7"
+    assert apparent_temperature_state is not None
+    assert apparent_temperature_state.state == "25.0"
     assert precipitation_hour_state is not None
     assert precipitation_hour_state.state == "1.2"
     assert precipitation_today_state is not None
     assert precipitation_today_state.state == "4.8"
     assert wind_speed_state is not None
     assert wind_speed_state.state == "4.68"
+    assert wind_speed_avg_state is not None
+    assert wind_speed_avg_state.state == "3.96"
+    assert wind_gust_direction_state is not None
+    assert wind_gust_direction_state.state == "200.0"
     assert pressure_state is None
 
     assert await hass.config_entries.async_unload(entry.entry_id)
