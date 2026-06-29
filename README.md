@@ -25,11 +25,11 @@ CHMI, Home Assistant, HACS, Nabu Casa, or the Open Home Foundation.
 
 ## Status
 
-This repository currently contains a development-preview Home Assistant custom
-integration for CHMI OpenData station observations and selected station
-summaries. APIs, entity behavior, configuration flow, diagnostics, and supported
-station data may change without notice until the project reaches a stable
-release.
+The current station-data scope is implemented: one configured CHMI station,
+current observations, selected recent daily station summaries,
+capability-filtered sensors, diagnostics, and a Home Assistant weather entity.
+The integration remains experimental while it is validated on multiple Home
+Assistant installations.
 
 During setup, Home Assistant suggests nearby stations from the official CHMI
 station metadata and stores the selected WSI / station ID.
@@ -152,12 +152,11 @@ All entities are attached to one Home Assistant device:
 
 ## Known limitations
 
-- The integration is under active development and is not production-ready.
-- The integration currently uses measured data for one configured station,
-  including current observations and selected official CHMI recent daily station
-  summaries. Future work stays limited to measured station data.
+- The integration uses measured data for one configured station, including
+  current observations and selected official CHMI recent daily station
+  summaries.
 - Text forecasts, weather alerts/warnings, radar products, image entities, and
-  camera entities are not planned.
+  camera entities are outside the project scope.
 - The weather condition is best-effort. When the station advertises SYNOP
   elements such as `ww`, `N`, `VV`, `Td`, `W1`, or `W2`, the integration uses
   those measured station values. Otherwise it falls back to recent
@@ -247,8 +246,7 @@ notices.
 
 See `SECURITY.md` for vulnerability reporting and dependency audit scope.
 
-## Roadmap
+## Status and Scope
 
-See `TODO.md` and `docs/roadmap.md`. Planned work is limited to CHMI station
-data, quality metadata, station-derived summaries, and station-measured weather
-condition improvements.
+See `docs/status.md` for the implemented station-data scope and explicit
+non-goals.
