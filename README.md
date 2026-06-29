@@ -10,9 +10,14 @@ CHMI Weather is a Home Assistant custom integration for weather station data fro
 ČHMÚ OpenData. The MVP reads current observations for one configured station at
 the shortest interval advertised by official CHMI metadata, creates a standard
 `weather` entity, and can expose diagnostic sensors for the raw measured values.
+The project scope is limited to measured CHMI station data published into Home
+Assistant.
 
 The integration uses official ČHMÚ OpenData JSON endpoints only. It does not
 scrape `chmi.cz` HTML pages.
+
+CHMI text forecasts, weather alerts/warnings, radar products, image entities, and
+camera entities are intentionally out of scope for this integration.
 
 This project is not affiliated with, endorsed by, certified by, or supported by
 CHMI, Home Assistant, HACS, Nabu Casa, or the Open Home Foundation.
@@ -134,8 +139,10 @@ All entities are attached to one Home Assistant device:
 ## Known MVP limitations
 
 - The integration is under active development and is not production-ready.
-- The MVP uses only current measured data from one station.
-- Forecast is not implemented yet.
+- The MVP uses only current measured data from one station. Future work stays
+  limited to measured station data.
+- Text forecasts, weather alerts/warnings, radar products, image entities, and
+  camera entities are not planned.
 - The weather condition is best-effort: rain in the last 10 minutes maps to
   `rainy`; otherwise it maps to `partlycloudy`.
 - Data quality and freshness depend on the ČHMÚ OpenData endpoint.
@@ -220,7 +227,6 @@ See `SECURITY.md` for vulnerability reporting and dependency audit scope.
 
 ## Roadmap
 
-1. Current observations MVP.
-2. Forecast source selection without fake forecast data.
-3. Hourly and daily forecast entities using official ČHMÚ OpenData.
-4. Radar or warning support if suitable official OpenData endpoints are stable.
+See `TODO.md` and `docs/roadmap.md`. Planned work is limited to CHMI station
+data, quality metadata, station-derived summaries, and station-measured weather
+condition improvements.

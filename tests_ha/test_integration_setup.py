@@ -12,7 +12,6 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components import chmi_weather
 from custom_components.chmi_weather.const import (
     CONF_DIAGNOSTIC_SENSORS,
-    CONF_FORECAST_SOURCE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_OBSERVATION_INTERVAL_MINUTES,
@@ -21,7 +20,6 @@ from custom_components.chmi_weather.const import (
     CONF_SUPPORTED_ELEMENTS,
     CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
-    DEFAULT_FORECAST_SOURCE,
     DOMAIN,
 )
 from custom_components.chmi_weather.models import (
@@ -147,7 +145,6 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
         options={
             CONF_UPDATE_INTERVAL: 10,
             CONF_DIAGNOSTIC_SENSORS: True,
-            CONF_FORECAST_SOURCE: DEFAULT_FORECAST_SOURCE,
         },
     )
     entry.add_to_hass(hass)

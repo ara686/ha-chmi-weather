@@ -35,8 +35,7 @@
         "title": "CHMI Weather options",
         "data": {
           "update_interval_minutes": "Update interval in minutes",
-          "diagnostic_sensors": "Enable diagnostic sensors",
-          "forecast_source": "Forecast source"
+          "diagnostic_sensors": "Enable diagnostic sensors"
         }
       }
     }

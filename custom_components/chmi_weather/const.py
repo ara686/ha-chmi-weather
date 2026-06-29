@@ -17,7 +17,6 @@ DEFAULT_LONGITUDE = 14.2759
 DEFAULT_UPDATE_INTERVAL_MINUTES = 10
 DEFAULT_OBSERVATION_INTERVAL_MINUTES = 10
 DEFAULT_DIAGNOSTIC_SENSORS = True
-DEFAULT_FORECAST_SOURCE = "none"
 DEFAULT_STATION_SELECTION_LIMIT = 10
 
 CONF_STATION_ID = "station_id"
@@ -29,7 +28,6 @@ CONF_LATITUDE = "latitude"
 CONF_LONGITUDE = "longitude"
 CONF_UPDATE_INTERVAL = "update_interval_minutes"
 CONF_DIAGNOSTIC_SENSORS = "diagnostic_sensors"
-CONF_FORECAST_SOURCE = "forecast_source"
 
 CHMI_BASE_URL = "https://opendata.chmi.cz/meteorology/climate/now/data"
 CHMI_METADATA_BASE_URL = "https://opendata.chmi.cz/meteorology/climate/now/metadata"

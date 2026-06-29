@@ -38,8 +38,12 @@ flowchart LR
 5. The coordinator keeps the last valid observation and converts fetch or parse
    errors into `UpdateFailed`.
 
-## Forecast
+## Scope
 
-Forecast is intentionally not exposed in the MVP. Future forecast work should
-add explicit hourly/daily data sources and Home Assistant forecast methods
-without legacy forecast attributes or fake values.
+The integration is scoped to measured CHMI station data only. Future parser and
+entity work should stay within station metadata, current station observations,
+station quality metadata, station recent/daily summaries, and station-measured
+weather condition inputs.
+
+CHMI text forecasts, alerts/warnings, radar products, image entities, and camera
+entities are non-goals for this integration.

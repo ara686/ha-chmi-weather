@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Clarified that CHMI Weather is scoped only to measured station data published
+  into Home Assistant.
+- Removed the unused forecast source option from the integration options UI.
+- Added station-data TODO items and documented text forecasts, alerts/warnings,
+  radar products, image entities, and camera entities as non-goals.
+
 ## 0.1.6
 
 - Added current-station sensors for 10-minute temperature extrema, apparent
