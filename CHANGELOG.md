@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0
+
 - Clarified that CHMI Weather is scoped only to measured station data published
   into Home Assistant.
 - Removed the unused forecast source option from the integration options UI.
@@ -19,6 +21,10 @@
   them.
 - Added parser validation fixtures for an additional CHMI station with pressure
   and SYNOP `1H` elements.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
+- Migration: no user action required; station capabilities are refreshed during
+  setup, and new sensors appear when CHMI publishes matching station data.
+- Breaking changes: none.
 
 ## 0.1.6
 
