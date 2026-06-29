@@ -5,6 +5,10 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "daily"
+    ignore:
+      # This package defines the checked Home Assistant stable test harness.
+      # Update it manually after verifying it points to a stable HA release.
+      - dependency-name: "pytest-homeassistant-custom-component"
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "develop"

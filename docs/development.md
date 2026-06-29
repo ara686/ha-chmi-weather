@@ -50,6 +50,11 @@ As of 2026-06-27, the latest checked stable Home Assistant package is
 `2026.6.4`, via `pytest-homeassistant-custom-component==0.13.340`. Home
 Assistant stable testing currently requires Python 3.14.
 
+`pytest-homeassistant-custom-component` is intentionally excluded from
+Dependabot version updates because newer package releases can point at Home
+Assistant beta builds. Update the `ha-stable` pin manually only after confirming
+that the package maps to the latest stable Home Assistant release.
+
 Run the beta/pre-release check before deployment-oriented changes and when Home
 Assistant publishes a beta:
 
