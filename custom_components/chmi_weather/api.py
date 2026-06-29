@@ -281,6 +281,58 @@ class ChmiApiClient:
         """Build a CHMI station capability metadata URL."""
         return f"{self._metadata_base_url}/meta2-{day:%Y%m%d}.json"
 
+    async def async_get_flag_descriptions(self) -> dict[str, dict[str, str]]:
+        """Return CHMI flag descriptions from current metadata."""
+        today = datetime.now(UTC).date()
+        last_error: ChmiApiError | None = None
+
+        for day in (today, today - timedelta(days=1)):
+            try:
+                return await self.async_get_flag_descriptions_for_date(day)
+            except (ChmiApiNotFoundError, ChmiApiDataError) as err:
+                last_error = err
+
+        raise last_error or ChmiApiDataError("No usable CHMI flag metadata found")
+
+    async def async_get_flag_descriptions_for_date(
+        self,
+        day: date,
+    ) -> dict[str, dict[str, str]]:
+        """Return CHMI flag descriptions from one UTC date."""
+        url = self._build_flag_descriptions_url(day)
+        payload = await self._async_get_json(url)
+        return parse_flag_descriptions(payload)
+
+    def _build_flag_descriptions_url(self, day: date) -> str:
+        """Build a CHMI flag description metadata URL."""
+        return f"{self._metadata_base_url}/meta3-{day:%Y%m%d}.json"
+
+    async def async_get_quality_descriptions(self) -> dict[int, str]:
+        """Return CHMI quality-code descriptions from current metadata."""
+        today = datetime.now(UTC).date()
+        last_error: ChmiApiError | None = None
+
+        for day in (today, today - timedelta(days=1)):
+            try:
+                return await self.async_get_quality_descriptions_for_date(day)
+            except (ChmiApiNotFoundError, ChmiApiDataError) as err:
+                last_error = err
+
+        raise last_error or ChmiApiDataError("No usable CHMI quality metadata found")
+
+    async def async_get_quality_descriptions_for_date(
+        self,
+        day: date,
+    ) -> dict[int, str]:
+        """Return CHMI quality-code descriptions from one UTC date."""
+        url = self._build_quality_descriptions_url(day)
+        payload = await self._async_get_json(url)
+        return parse_quality_descriptions(payload)
+
+    def _build_quality_descriptions_url(self, day: date) -> str:
+        """Build a CHMI quality description metadata URL."""
+        return f"{self._metadata_base_url}/meta4-{day:%Y%m%d}.json"
+
     async def _async_get_json(self, url: str) -> Mapping[str, Any]:
         """Fetch a JSON document."""
         try:
@@ -556,6 +608,56 @@ def parse_station_capabilities(
     )
 
 
+def parse_flag_descriptions(payload: Mapping[str, Any]) -> dict[str, dict[str, str]]:
+    """Parse CHMI meta3 flag descriptions."""
+    values = _extract_values(payload)
+    if not values:
+        raise ChmiApiDataError("CHMI flag metadata does not contain rows")
+
+    indices = _extract_header_indices(payload)
+    descriptions: dict[str, dict[str, str]] = {}
+
+    for row in values:
+        if not _is_row(row):
+            continue
+
+        element = _as_str(_row_value(row, indices, "EL_ABBREVIATION", 0))
+        flag = _as_str(_row_value(row, indices, "FLAG", 1))
+        description = _as_str(_row_value(row, indices, "DESCRIPTION", 2))
+        if element is None or flag is None or description is None:
+            continue
+
+        descriptions.setdefault(element, {})[flag] = description
+
+    if not descriptions:
+        raise ChmiApiDataError("CHMI flag metadata has no usable descriptions")
+    return descriptions
+
+
+def parse_quality_descriptions(payload: Mapping[str, Any]) -> dict[int, str]:
+    """Parse CHMI meta4 quality-code descriptions."""
+    values = _extract_values(payload)
+    if not values:
+        raise ChmiApiDataError("CHMI quality metadata does not contain rows")
+
+    indices = _extract_header_indices(payload)
+    descriptions: dict[int, str] = {}
+
+    for row in values:
+        if not _is_row(row):
+            continue
+
+        code = _as_int(_row_value(row, indices, "FLAG2", 0))
+        description = _as_str(_row_value(row, indices, "DESCRIPTION", 1))
+        if code is None or description is None:
+            continue
+        descriptions[code] = description
+
+    if not descriptions:
+        raise ChmiApiDataError("CHMI quality metadata has no usable descriptions")
+    return descriptions
+
+
 def _normalize_station_id(station_id: str) -> str:
     normalized = station_id.strip()
     if not normalized or STATION_ID_PATTERN.fullmatch(normalized) is None:
@@ -711,6 +813,17 @@ def _as_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _as_int(value: Any) -> int | None:
+    parsed = _as_float(value)
+    if parsed is None:
+        return None
+
+    code = int(parsed)
+    if parsed != code:
+        return None
+    return code
 
 
 def _as_str(value: Any) -> str | None:

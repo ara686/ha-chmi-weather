@@ -7,6 +7,8 @@
 - Removed the unused forecast source option from the integration options UI.
 - Added station-data TODO items and documented text forecasts, alerts/warnings,
   radar products, image entities, and camera entities as non-goals.
+- Added CHMI `meta3` and `meta4` metadata loading so diagnostics include flag
+  descriptions and official quality-code descriptions when available.
 
 ## 0.1.6
 

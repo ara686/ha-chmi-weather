@@ -66,6 +66,10 @@ async def async_get_config_entry_diagnostics(
             "update_interval_minutes",
             effective_update_interval_minutes,
         )
+    quality_descriptions = (
+        getattr(runtime_data, "quality_descriptions", None) or CHMI_QUALITY_DESCRIPTIONS
+    )
+    flag_descriptions = getattr(runtime_data, "flag_descriptions", None) or {}
 
     return {
         "station_id": config_entry.data.get(CONF_STATION_ID),
@@ -99,38 +103,70 @@ async def async_get_config_entry_diagnostics(
             list(observation.available_elements) if observation is not None else []
         ),
         "quality_by_element": (
-            _quality_by_element(observation.quality_by_element)
+            _quality_by_element(
+                observation.quality_by_element,
+                quality_descriptions,
+            )
             if observation is not None
             else {}
         ),
-        "flag_by_element": observation.flag_by_element
-        if observation is not None
-        else {},
+        "flag_by_element": (
+            _flag_by_element(observation.flag_by_element, flag_descriptions)
+            if observation is not None
+            else {}
+        ),
         "quality_code_descriptions": {
-            str(code): description
-            for code, description in CHMI_QUALITY_DESCRIPTIONS.items()
+            str(code): description for code, description in quality_descriptions.items()
         },
     }
 
 
 def _quality_by_element(
     quality_by_element: dict[str, float | None],
+    quality_descriptions: dict[int, str],
 ) -> dict[str, dict[str, float | str | None]]:
     """Return diagnostic-friendly CHMI quality details."""
     return {
         element: {
             "code": quality,
-            "description": _quality_description(quality),
+            "description": _quality_description(quality, quality_descriptions),
         }
         for element, quality in quality_by_element.items()
     }
 
 
-def _quality_description(quality: float | None) -> str | None:
+def _flag_by_element(
+    flag_by_element: dict[str, str | None],
+    flag_descriptions: dict[str, dict[str, str]],
+) -> dict[str, dict[str, str | None]]:
+    """Return diagnostic-friendly CHMI flag details."""
+    return {
+        element: {
+            "flag": flag,
+            "description": _flag_description(element, flag, flag_descriptions),
+        }
+        for element, flag in flag_by_element.items()
+    }
+
+
+def _quality_description(
+    quality: float | None,
+    quality_descriptions: dict[int, str],
+) -> str | None:
     if quality is None:
         return None
 
     code = int(quality)
     if quality != code:
         return None
-    return CHMI_QUALITY_DESCRIPTIONS.get(code)
+    return quality_descriptions.get(code)
+
+
+def _flag_description(
+    element: str,
+    flag: str | None,
+    flag_descriptions: dict[str, dict[str, str]],
+) -> str | None:
+    if flag is None:
+        return None
+    return flag_descriptions.get(element, {}).get(flag)

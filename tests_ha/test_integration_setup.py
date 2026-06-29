@@ -39,6 +39,14 @@ class FakeChmiApiClient:
         """Initialize fake client."""
         self.session = session
 
+    async def async_get_flag_descriptions(self) -> dict[str, dict[str, str]]:
+        """Return CHMI flag descriptions."""
+        return {"D": {"V": "Variable"}}
+
+    async def async_get_quality_descriptions(self) -> dict[int, str]:
+        """Return CHMI quality-code descriptions."""
+        return {0: "Good/Kvalitni hodnota", 5: "Unknown/Kvalita neznama"}
+
     async def async_get_station_capabilities(
         self,
         station_id: str,
@@ -205,6 +213,11 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
         "60": ["SRA1H"],
     }
     assert entry.data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
+    assert entry.runtime_data.flag_descriptions == {"D": {"V": "Variable"}}
+    assert entry.runtime_data.quality_descriptions == {
+        0: "Good/Kvalitni hodnota",
+        5: "Unknown/Kvalita neznama",
+    }
     assert weather_state is not None
     assert weather_state.state == "partlycloudy"
     assert temperature_state is not None
