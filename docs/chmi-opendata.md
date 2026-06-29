@@ -1,6 +1,6 @@
 # CHMI OpenData
 
-The MVP uses official CHMI OpenData current observation files, not HTML station
+The integration uses official CHMI OpenData station data files, not HTML station
 pages.
 
 ## Data License and Attribution
@@ -146,13 +146,14 @@ Observed header:
 OBS_TYPE,WSI,EG_EL_ABBREVIATION,NAME,UN_DESCRIPTION,HEIGHT,SCHEDULE
 ```
 
-The current observation MVP selects the shortest usable `OBS_TYPE` / `SCHEDULE`
-value for each station and stores supported elements grouped by interval. The
-Dobřichovice fixture advertises both `10M` and `1H`, so the integration uses
-`10M` and the `10m-*` data files for station data. It also records that hourly
-`SRA1H` is available in the `1h-*` data file. For the Dobřichovice fixture, wind
-is advertised through `D`, `Dmax`, `Dprum`, `F`, `Fmax`, and `Fprum`, while
-pressure `P` is not advertised for the selected interval.
+For current observations, the integration selects the shortest usable `OBS_TYPE`
+/ `SCHEDULE` value for each station and stores supported elements grouped by
+interval. The Dobřichovice fixture advertises both `10M` and `1H`, so the
+integration uses `10M` and the `10m-*` data files for station data. It also
+records that hourly `SRA1H` is available in the `1h-*` data file. For the
+Dobřichovice fixture, wind is advertised through `D`, `Dmax`, `Dprum`, `F`,
+`Fmax`, and `Fprum`, while pressure `P` is not advertised for the selected
+interval.
 
 ## Element mapping
 
