@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Excluded `pytest-homeassistant-custom-component` from Dependabot version
+  updates so the Home Assistant stable test harness stays manually verified.
+
 ## 0.2.1
 
 - Cleaned project status documentation to describe the implemented station-data
