@@ -25,11 +25,13 @@ products, image entities, or camera entities.
   month precipitation.
 - Weather condition mapping from station-measured SYNOP elements when
   advertised, including `ww`, `N`, `VV`, `Td`, `W1`, and `W2`.
+- Parser validation fixtures for additional station examples beyond
+  Dobrichovice, including a station with pressure and SYNOP `1H` elements.
 - Tests, CI, and docs.
 
 ## TODO
 
-- Add validation tests for additional station examples.
+- No open station-data items currently.
 
 ## Non-Goals
 

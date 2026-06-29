@@ -4,7 +4,7 @@ This project only publishes measured CHMI station data into Home Assistant.
 
 ## Station Data
 
-- Add validation tests for additional station examples.
+- No open station-data items currently.
 
 ## Non-Goals
 
