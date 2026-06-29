@@ -13,6 +13,7 @@ from custom_components.chmi_weather.api import ChmiApiDataError
 from custom_components.chmi_weather.const import (
     CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
 )
 from custom_components.chmi_weather.coordinator import ChmiDataUpdateCoordinator
@@ -46,8 +47,16 @@ class SuccessfulClient:
         *,
         interval_minutes: int,
         precipitation_timezone,
+        precipitation_1h_interval_minutes,
     ):
-        self.calls.append((station_id, interval_minutes, precipitation_timezone))
+        self.calls.append(
+            (
+                station_id,
+                interval_minutes,
+                precipitation_timezone,
+                precipitation_1h_interval_minutes,
+            )
+        )
         return _observation()
 
 
@@ -60,6 +69,7 @@ class FailingClient:
         *,
         interval_minutes: int,
         precipitation_timezone,
+        precipitation_1h_interval_minutes,
     ):
         raise ChmiApiDataError("bad data")
 
@@ -69,6 +79,7 @@ def _config_entry(*, options=None):
         data={
             CONF_STATION_ID: "0-203-0-11521",
             CONF_OBSERVATION_INTERVAL_MINUTES: 10,
+            CONF_SUPPORTED_ELEMENTS_BY_INTERVAL: {"10": ["SRA10M"], "60": ["SRA1H"]},
         },
         options=options or {},
     )
@@ -110,7 +121,7 @@ def test_coordinator_records_last_successful_poll() -> None:
     assert coordinator.last_observation == _observation()
     assert coordinator.last_successful_poll is not None
     assert coordinator.last_successful_poll.tzinfo == UTC
-    assert client.calls == [("0-203-0-11521", 10, UTC)]
+    assert client.calls == [("0-203-0-11521", 10, UTC, 60)]
 
 
 def test_coordinator_passes_home_assistant_timezone() -> None:

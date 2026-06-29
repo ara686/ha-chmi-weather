@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Added current-station sensors for 10-minute temperature extrema, apparent
+  temperature, average wind speed, average wind direction, and wind gust
+  direction when advertised by CHMI `meta2`.
+- Use raw hourly CHMI `SRA1H` for `Precipitation 1h` when the station advertises
+  it, while keeping the existing `SRA10M` rolling-hour fallback.
+- Added selected CHMI `QUALITY` and `FLAG` values to diagnostics.
+- Updated CHMI OpenData docs, statistics guidance, translations, fixtures, and
+  tests for the expanded current data set.
+- Migration: no user action required; station capabilities are refreshed during
+  setup.
+- Breaking changes: none.
+
 ## 0.1.5
 
 - Fixed `Precipitation today` to use the Home Assistant local date by combining

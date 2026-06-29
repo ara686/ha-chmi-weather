@@ -27,12 +27,20 @@ class ChmiObservation:
     wind_speed: float | None
     wind_gust: float | None
     wind_direction: float | None
+    temperature_max_10m: float | None = None
+    temperature_min_10m: float | None = None
+    apparent_temperature: float | None = None
+    wind_speed_avg: float | None = None
+    wind_direction_avg: float | None = None
+    wind_gust_direction: float | None = None
     precipitation_1h: float | None = None
     precipitation_today: float | None = None
     precipitation_samples: tuple[ChmiPrecipitationSample, ...] = field(
         default_factory=tuple
     )
     available_elements: tuple[str, ...] = field(default_factory=tuple)
+    quality_by_element: dict[str, float | None] = field(default_factory=dict)
+    flag_by_element: dict[str, str | None] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -56,6 +64,9 @@ class ChmiStationCapabilities:
     supported_elements: tuple[str, ...]
     observation_type: str
     observation_interval_minutes: int
+    supported_elements_by_interval: dict[int, tuple[str, ...]] = field(
+        default_factory=dict
+    )
 
 
 @dataclass(slots=True)

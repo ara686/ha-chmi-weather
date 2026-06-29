@@ -14,6 +14,7 @@ from .const import (
     CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
     CONF_SUPPORTED_ELEMENTS,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
 )
 from .coordinator import ChmiDataUpdateCoordinator
 
@@ -88,8 +89,14 @@ async def _async_refresh_station_capabilities(
         return
 
     supported_elements = list(capabilities.supported_elements)
+    supported_elements_by_interval = {
+        str(interval): list(elements)
+        for interval, elements in capabilities.supported_elements_by_interval.items()
+    }
     if (
         entry.data.get(CONF_SUPPORTED_ELEMENTS) == supported_elements
+        and entry.data.get(CONF_SUPPORTED_ELEMENTS_BY_INTERVAL)
+        == supported_elements_by_interval
         and entry.data.get(CONF_OBSERVATION_INTERVAL_MINUTES)
         == capabilities.observation_interval_minutes
     ):
@@ -100,6 +107,7 @@ async def _async_refresh_station_capabilities(
         data={
             **entry.data,
             CONF_SUPPORTED_ELEMENTS: supported_elements,
+            CONF_SUPPORTED_ELEMENTS_BY_INTERVAL: supported_elements_by_interval,
             CONF_OBSERVATION_INTERVAL_MINUTES: (
                 capabilities.observation_interval_minutes
             ),

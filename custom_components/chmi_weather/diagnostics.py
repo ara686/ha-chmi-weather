@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    CHMI_QUALITY_DESCRIPTIONS,
     CONF_DIAGNOSTIC_SENSORS,
     CONF_LATITUDE,
     CONF_LONGITUDE,
@@ -15,6 +16,7 @@ from .const import (
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_SUPPORTED_ELEMENTS,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_SENSORS,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
@@ -79,6 +81,9 @@ async def async_get_config_entry_diagnostics(
             DEFAULT_DIAGNOSTIC_SENSORS,
         ),
         "supported_elements": list(config_entry.data.get(CONF_SUPPORTED_ELEMENTS, [])),
+        "supported_elements_by_interval": dict(
+            config_entry.data.get(CONF_SUPPORTED_ELEMENTS_BY_INTERVAL, {})
+        ),
         "last_observed_timestamp": (
             observation.observed_at.isoformat()
             if observation is not None and observation.observed_at is not None
@@ -93,4 +98,39 @@ async def async_get_config_entry_diagnostics(
         "available_elements": (
             list(observation.available_elements) if observation is not None else []
         ),
+        "quality_by_element": (
+            _quality_by_element(observation.quality_by_element)
+            if observation is not None
+            else {}
+        ),
+        "flag_by_element": observation.flag_by_element
+        if observation is not None
+        else {},
+        "quality_code_descriptions": {
+            str(code): description
+            for code, description in CHMI_QUALITY_DESCRIPTIONS.items()
+        },
     }
+
+
+def _quality_by_element(
+    quality_by_element: dict[str, float | None],
+) -> dict[str, dict[str, float | str | None]]:
+    """Return diagnostic-friendly CHMI quality details."""
+    return {
+        element: {
+            "code": quality,
+            "description": _quality_description(quality),
+        }
+        for element, quality in quality_by_element.items()
+    }
+
+
+def _quality_description(quality: float | None) -> str | None:
+    if quality is None:
+        return None
+
+    code = int(quality)
+    if quality != code:
+        return None
+    return CHMI_QUALITY_DESCRIPTIONS.get(code)

@@ -45,6 +45,10 @@ prefixes are `10m` for `OBS_TYPE` / `SCHEDULE` value `10M` and `1h` for `1H`.
 The parser selects the shortest advertised interval for the station and falls
 back to longer intervals when no shorter interval is advertised.
 
+Some stations advertise companion hourly elements even when the selected current
+observation interval is `10M`. When `meta2` advertises `SRA1H`, the integration
+can fetch the matching `1h` file and use that raw value for `Precipitation 1h`.
+
 `YYYYMMDD` is calculated from the current UTC day. If today's file is missing or
 does not contain usable rows, the API client tries yesterday's UTC file.
 
@@ -67,6 +71,8 @@ The parser selects the latest valid numeric value per mapped element. For
 so the integration can derive one-hour and rainfall totals. During normal Home
 Assistant polling, the integration combines the current and previous UTC daily
 files before calculating `Precipitation today` for the Home Assistant local date.
+The parser also keeps the selected row's `QUALITY` and `FLAG` values for
+diagnostics.
 
 ## Station metadata
 
@@ -108,25 +114,46 @@ OBS_TYPE,WSI,EG_EL_ABBREVIATION,NAME,UN_DESCRIPTION,HEIGHT,SCHEDULE
 ```
 
 The current observation MVP selects the shortest usable `OBS_TYPE` / `SCHEDULE`
-value for each station. The Dobřichovice fixture advertises both `10M` and `1H`,
-so the integration uses `10M` and the `10m-*` data files. For the Dobřichovice
-fixture, wind is advertised through `D`, `F`, and `Fmax`, while pressure `P` is
-not advertised for the selected interval.
+value for each station and stores supported elements grouped by interval. The
+Dobřichovice fixture advertises both `10M` and `1H`, so the integration uses
+`10M` and the `10m-*` data files for station data. It also records that hourly
+`SRA1H` is available in the `1h-*` data file. For the Dobřichovice fixture, wind
+is advertised through `D`, `Dmax`, `Dprum`, `F`, `Fmax`, and `Fprum`, while
+pressure `P` is not advertised for the selected interval.
 
 ## Element mapping
 
 | Field | CHMI element |
 | --- | --- |
 | Temperature | `T` |
+| Temperature maximum 10m | `TMA` |
+| Temperature minimum 10m | `TMI` |
+| Apparent temperature | `TPM` |
 | Humidity | `H` |
 | Pressure | `P` |
 | Precipitation 10m | `SRA10M` |
-| Precipitation 1h | derived from `SRA10M` |
+| Precipitation 1h | `SRA1H`, or derived from `SRA10M` |
 | Precipitation today | derived from `SRA10M` |
 | Wind speed | `F` |
+| Average wind speed | `Fprum` |
 | Wind gust | `Fmax` |
 | Wind direction | `D` |
+| Average wind direction | `Dprum` |
+| Wind gust direction | `Dmax` |
 
-The sampled Dobřichovice metadata contains `TPM` but not `P`. The MVP keeps the
-requested `P` pressure mapping but does not create the pressure diagnostic sensor
-unless the station advertises `P` in `meta2`.
+The sampled Dobřichovice metadata contains `TPM` but not `P`. The integration
+keeps the requested `P` pressure mapping but does not create the pressure
+diagnostic sensor unless the station advertises `P` in `meta2`.
+
+## Data quality diagnostics
+
+Current observation rows include CHMI `FLAG` and `QUALITY` columns. The
+integration exposes these details only through Home Assistant diagnostics:
+
+- `quality_by_element`: selected `QUALITY` code and a short description for each
+  parsed element.
+- `flag_by_element`: selected `FLAG` value for each parsed element.
+- `quality_code_descriptions`: known quality-code descriptions.
+
+The data quality values are intentionally not exposed as regular sensor
+attributes to avoid high-churn state attributes.

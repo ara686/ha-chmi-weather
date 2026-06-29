@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from custom_components.chmi_weather.const import (
     CONF_OBSERVATION_INTERVAL_MINUTES,
     CONF_STATION_ID,
+    CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
     DOMAIN,
 )
@@ -30,6 +31,8 @@ def _observation() -> ChmiObservation:
         wind_gust=2.9,
         wind_direction=222.0,
         available_elements=("D", "F", "Fmax", "H", "SRA10M", "T"),
+        quality_by_element={"T": 5.0, "SRA10M": 0.0},
+        flag_by_element={"T": None, "SRA10M": None},
     )
 
 
@@ -44,6 +47,7 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
         data={
             CONF_STATION_ID: "0-203-0-11521",
             CONF_OBSERVATION_INTERVAL_MINUTES: 10,
+            CONF_SUPPORTED_ELEMENTS_BY_INTERVAL: {"10": ["SRA10M"], "60": ["SRA1H"]},
         },
         options={CONF_UPDATE_INTERVAL: 60},
         runtime_data=SimpleNamespace(coordinator=coordinator),
@@ -57,3 +61,17 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
     assert diagnostics["observation_interval_minutes"] == 10
     assert diagnostics["configured_update_interval_minutes"] == 60
     assert diagnostics["effective_update_interval_minutes"] == 10
+    assert diagnostics["supported_elements_by_interval"] == {
+        "10": ["SRA10M"],
+        "60": ["SRA1H"],
+    }
+    assert diagnostics["quality_by_element"]["T"] == {
+        "code": 5.0,
+        "description": "Unknown",
+    }
+    assert diagnostics["quality_by_element"]["SRA10M"] == {
+        "code": 0.0,
+        "description": "Good",
+    }
+    assert diagnostics["flag_by_element"] == {"T": None, "SRA10M": None}
+    assert diagnostics["quality_code_descriptions"]["0"] == "Good"

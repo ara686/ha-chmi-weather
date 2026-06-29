@@ -46,6 +46,15 @@
       "temperature": {
         "name": "Teplota"
       },
+      "temperature_max_10m": {
+        "name": "Teplotni maximum 10m"
+      },
+      "temperature_min_10m": {
+        "name": "Teplotni minimum 10m"
+      },
+      "apparent_temperature": {
+        "name": "Pocitova teplota"
+      },
       "humidity": {
         "name": "Vlhkost"
       },
@@ -64,11 +73,20 @@
       "wind_speed": {
         "name": "Rychlost vetru"
       },
+      "wind_speed_avg": {
+        "name": "Prumerna rychlost vetru"
+      },
       "wind_gust": {
         "name": "Naraz vetru"
       },
       "wind_direction": {
         "name": "Smer vetru"
+      },
+      "wind_direction_avg": {
+        "name": "Prumerny smer vetru"
+      },
+      "wind_gust_direction": {
+        "name": "Smer narazu vetru"
       },
       "observation_time": {
         "name": "Cas mereni"

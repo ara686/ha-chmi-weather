@@ -6,7 +6,9 @@ respecting the Creative Commons Attribution 4.0 International license
 (CC BY 4.0).
 
 The fixtures were trimmed and stored in repository-friendly JSON files for
-parser and integration tests.
+parser and integration tests. Dobrichovice current data is split into a `10M`
+sample and a companion `1H` sample because CHMI publishes `SRA10M` and `SRA1H`
+through separate current-observation files.
 
 Attribution:
 
