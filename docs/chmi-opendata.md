@@ -64,8 +64,9 @@ Rows are arrays:
 
 The parser selects the latest valid numeric value per mapped element. For
 `SRA10M`, it also keeps timestamped interval samples from the selected daily file
-so the integration can derive one-hour and current-file rainfall totals without
-calling additional CHMI endpoints during every poll.
+so the integration can derive one-hour and rainfall totals. During normal Home
+Assistant polling, the integration combines the current and previous UTC daily
+files before calculating `Precipitation today` for the Home Assistant local date.
 
 ## Station metadata
 

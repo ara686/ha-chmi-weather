@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from copy import deepcopy
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
+from custom_components.chmi_weather import api
 from custom_components.chmi_weather.api import (
     ChmiApiClient,
     ChmiApiDataError,
@@ -85,6 +88,69 @@ def test_parser_calculates_precipitation_totals() -> None:
         ("2026-06-26T08:10:00+00:00", 0.5),
         ("2026-06-26T08:50:00+00:00", 0.2),
     ]
+
+
+def test_api_client_calculates_precipitation_today_for_local_date(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 29, 8, 0, tzinfo=tz or UTC)
+
+    class PayloadClient(ChmiApiClient):
+        def __init__(self, payloads_by_day):
+            super().__init__(session=object())
+            self.payloads_by_day = payloads_by_day
+            self.days = []
+
+        async def async_get_current_observations_for_date(
+            self,
+            station_id: str,
+            day: date,
+            *,
+            interval_minutes: int = 10,
+        ):
+            self.days.append(day)
+            return parse_current_observations(self.payloads_by_day[day], station_id)
+
+    previous_payload = deepcopy(_fixture())
+    previous_rows = _values(previous_payload)
+    previous_rows.extend(
+        [
+            [STATION_ID, "SRA10M", "2026-06-28T21:50:00Z", 2.0, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-28T22:10:00Z", 0.1, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-28T22:20:00Z", 3.7, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-28T22:30:00Z", 0.8, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-28T23:10:00Z", 0.1, "", 5.0],
+        ]
+    )
+    current_payload = deepcopy(_fixture())
+    current_rows = _values(current_payload)
+    current_rows.extend(
+        [
+            [STATION_ID, "SRA10M", "2026-06-29T00:00:00Z", 0.0, "", 5.0],
+            [STATION_ID, "SRA10M", "2026-06-29T00:10:00Z", 0.0, "", 5.0],
+        ]
+    )
+    client = PayloadClient(
+        {
+            date(2026, 6, 29): current_payload,
+            date(2026, 6, 28): previous_payload,
+        }
+    )
+    monkeypatch.setattr(api, "datetime", FrozenDatetime)
+
+    observation = asyncio.run(
+        client.async_get_current_observations(
+            STATION_ID,
+            precipitation_timezone=ZoneInfo("Europe/Prague"),
+        )
+    )
+
+    assert client.days == [date(2026, 6, 29), date(2026, 6, 28)]
+    assert observation.precipitation_today == 4.7
+    assert observation.precipitation_10m == 0.0
 
 
 def test_parser_ignores_none_and_empty_values() -> None:

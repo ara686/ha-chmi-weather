@@ -34,8 +34,9 @@ source for Utility Meter helpers because repeated polls of the same upstream
 timestamp must not be counted as new rainfall.
 
 Use `Precipitation today` as the source for Utility Meter helpers. It is a
-cumulative rainfall total derived from `SRA10M` rows in the current CHMI daily
-file and is exposed with Home Assistant state class `total_increasing`.
+cumulative rainfall total derived from `SRA10M` rows for the current Home
+Assistant local date and is exposed with Home Assistant state class
+`total_increasing`.
 
 Keep `delta_values` disabled for these Utility Meter helpers. The source is a
 cumulative value, not a delta value.
@@ -70,9 +71,9 @@ advertises `SRA10M`:
 
 - `Precipitation 10m`: raw latest `SRA10M` interval value.
 - `Precipitation 1h`: rolling sum of the latest hour available in the selected
-  CHMI daily file.
-- `Precipitation today`: cumulative sum available in the selected CHMI daily
-  file, intended as the Utility Meter source for calendar cycles.
+  current-observation files.
+- `Precipitation today`: cumulative sum for the current Home Assistant local
+  date, intended as the Utility Meter source for calendar cycles.
 
 Use `Precipitation 1h` for direct dashboard cards or automations that need the
 latest rolling-hour rainfall. Use Utility Meter helpers based on `Precipitation
