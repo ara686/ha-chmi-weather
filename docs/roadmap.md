@@ -23,12 +23,12 @@ products, image entities, or camera entities.
 - Official CHMI recent daily summary sensors for yesterday precipitation,
   yesterday temperature maximum/minimum, yesterday wind gust maximum, and CHMI
   month precipitation.
+- Weather condition mapping from station-measured SYNOP elements when
+  advertised, including `ww`, `N`, `VV`, `Td`, `W1`, and `W2`.
 - Tests, CI, and docs.
 
 ## TODO
 
-- Improve the weather condition using station-measured elements when advertised,
-  such as 1-hour SYNOP `ww`, `W1`, `W2`, `N`, `VV`, and `Td`.
 - Add validation tests for additional station examples.
 
 ## Non-Goals

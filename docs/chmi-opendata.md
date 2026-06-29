@@ -48,6 +48,9 @@ back to longer intervals when no shorter interval is advertised.
 Some stations advertise companion hourly elements even when the selected current
 observation interval is `10M`. When `meta2` advertises `SRA1H`, the integration
 can fetch the matching `1h` file and use that raw value for `Precipitation 1h`.
+When `meta2` advertises hourly SYNOP weather elements such as `ww`, `N`, `VV`,
+`Td`, `W1`, or `W2`, the integration can fetch the matching `1h` file and use
+those measured station values for the Home Assistant weather condition.
 
 `YYYYMMDD` is calculated from the current UTC day. If today's file is missing or
 does not contain usable rows, the API client tries yesterday's UTC file.
@@ -169,6 +172,7 @@ pressure `P` is not advertised for the selected interval.
 | Yesterday temperature minimum | `TMI` from recent daily |
 | Yesterday wind gust maximum | `Fmax` from recent daily |
 | CHMI month precipitation | sum of `SRA` from recent daily |
+| Weather condition | `ww`, `N`, `VV`, `Td`, `W1`, `W2` from current/SYNOP data |
 | Wind speed | `F` |
 | Average wind speed | `Fprum` |
 | Wind gust | `Fmax` |

@@ -155,8 +155,10 @@ All entities are attached to one Home Assistant device:
   limited to measured station data.
 - Text forecasts, weather alerts/warnings, radar products, image entities, and
   camera entities are not planned.
-- The weather condition is best-effort: rain in the last 10 minutes maps to
-  `rainy`; otherwise it maps to `partlycloudy`.
+- The weather condition is best-effort. When the station advertises SYNOP
+  elements such as `ww`, `N`, `VV`, `Td`, `W1`, or `W2`, the integration uses
+  those measured station values. Otherwise it falls back to recent
+  precipitation and then `partlycloudy`.
 - Data quality and freshness depend on the ČHMÚ OpenData endpoint.
 - Home Assistant history only records data after the integration polls
   successfully; CHMI data already missed by an older polling configuration is

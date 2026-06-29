@@ -50,6 +50,12 @@ ELEMENT_WIND_DIRECTION = "D"
 ELEMENT_WIND_DIRECTION_AVG = "Dprum"
 ELEMENT_WIND_GUST_DIRECTION = "Dmax"
 ELEMENT_DAILY_PRECIPITATION = "SRA"
+ELEMENT_CLOUD_COVERAGE = "N"
+ELEMENT_DEW_POINT = "Td"
+ELEMENT_PRESENT_WEATHER = "ww"
+ELEMENT_PAST_WEATHER_1 = "W1"
+ELEMENT_PAST_WEATHER_2 = "W2"
+ELEMENT_VISIBILITY = "VV"
 
 OBSERVATION_VALUE_FIELDS = (
     "temperature",
@@ -66,6 +72,12 @@ OBSERVATION_VALUE_FIELDS = (
     "wind_direction",
     "wind_direction_avg",
     "wind_gust_direction",
+    "cloud_coverage",
+    "dew_point",
+    "visibility_code",
+    "present_weather_code",
+    "past_weather_code_1",
+    "past_weather_code_2",
 )
 
 CHMI_ELEMENT_BY_FIELD = {
@@ -83,7 +95,22 @@ CHMI_ELEMENT_BY_FIELD = {
     "wind_direction": ELEMENT_WIND_DIRECTION,
     "wind_direction_avg": ELEMENT_WIND_DIRECTION_AVG,
     "wind_gust_direction": ELEMENT_WIND_GUST_DIRECTION,
+    "cloud_coverage": ELEMENT_CLOUD_COVERAGE,
+    "dew_point": ELEMENT_DEW_POINT,
+    "visibility_code": ELEMENT_VISIBILITY,
+    "present_weather_code": ELEMENT_PRESENT_WEATHER,
+    "past_weather_code_1": ELEMENT_PAST_WEATHER_1,
+    "past_weather_code_2": ELEMENT_PAST_WEATHER_2,
 }
+
+WEATHER_CONDITION_ELEMENTS = (
+    ELEMENT_CLOUD_COVERAGE,
+    ELEMENT_DEW_POINT,
+    ELEMENT_VISIBILITY,
+    ELEMENT_PRESENT_WEATHER,
+    ELEMENT_PAST_WEATHER_1,
+    ELEMENT_PAST_WEATHER_2,
+)
 
 CHMI_QUALITY_DESCRIPTIONS = {
     0: "Good",

@@ -14,6 +14,9 @@
 - Added recent daily summary sensors from official CHMI `recent/data/daily`
   files for yesterday precipitation, yesterday temperature maximum/minimum,
   yesterday wind gust maximum, and CHMI month precipitation.
+- Improved the Home Assistant weather condition by using station-measured SYNOP
+  elements such as `ww`, `N`, `VV`, `Td`, `W1`, and `W2` when CHMI advertises
+  them.
 
 ## 0.1.6
 

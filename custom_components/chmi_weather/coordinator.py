@@ -20,6 +20,7 @@ from .const import (
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DOMAIN,
     ELEMENT_PRECIPITATION_1H,
+    WEATHER_CONDITION_ELEMENTS,
 )
 from .models import ChmiDailySummary, ChmiObservation
 
@@ -53,6 +54,10 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
         self.precipitation_1h_interval_minutes = _interval_with_supported_element(
             config_entry.data.get(CONF_SUPPORTED_ELEMENTS_BY_INTERVAL),
             ELEMENT_PRECIPITATION_1H,
+        )
+        self.weather_condition_interval_minutes = _interval_with_any_supported_element(
+            config_entry.data.get(CONF_SUPPORTED_ELEMENTS_BY_INTERVAL),
+            WEATHER_CONDITION_ELEMENTS,
         )
 
         configured_update_interval_minutes = int(
@@ -89,6 +94,9 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
                 precipitation_timezone=self.precipitation_timezone,
                 precipitation_1h_interval_minutes=(
                     self.precipitation_1h_interval_minutes
+                ),
+                weather_condition_interval_minutes=(
+                    self.weather_condition_interval_minutes
                 ),
             )
         except ChmiApiError as err:
@@ -152,6 +160,27 @@ def _interval_with_supported_element(
         if not isinstance(elements, list | tuple | set):
             continue
         if element not in {str(item) for item in elements}:
+            continue
+        try:
+            return max(1, int(interval))
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _interval_with_any_supported_element(
+    elements_by_interval: object,
+    elements: tuple[str, ...],
+) -> int | None:
+    """Return the first interval that advertises any of the requested elements."""
+    if not isinstance(elements_by_interval, Mapping):
+        return None
+
+    requested_elements = set(elements)
+    for interval, interval_elements in elements_by_interval.items():
+        if not isinstance(interval_elements, list | tuple | set):
+            continue
+        if requested_elements.isdisjoint({str(item) for item in interval_elements}):
             continue
         try:
             return max(1, int(interval))
