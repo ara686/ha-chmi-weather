@@ -9,7 +9,6 @@ from types import SimpleNamespace
 from custom_components.chmi_weather import config_flow
 from custom_components.chmi_weather.const import (
     CONF_DIAGNOSTIC_SENSORS,
-    CONF_FORECAST_SOURCE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_OBSERVATION_INTERVAL_MINUTES,
@@ -293,9 +292,9 @@ def test_options_flow_limits_update_interval_to_observation_interval() -> None:
             {
                 CONF_UPDATE_INTERVAL: 60,
                 CONF_DIAGNOSTIC_SENSORS: True,
-                CONF_FORECAST_SOURCE: "none",
             }
         )
     )
 
     assert result["data"][CONF_UPDATE_INTERVAL] == 10
+    assert result["data"][CONF_DIAGNOSTIC_SENSORS] is True
