@@ -2,8 +2,13 @@
 
 ## Unreleased
 
+## 0.2.1
+
 - Cleaned project status documentation to describe the implemented station-data
   scope while keeping the experimental non-production warning.
+- Compatibility: validated with Home Assistant stable and beta test harnesses.
+- Migration: no user action required.
+- Breaking changes: none.
 
 ## 0.2.0
 
