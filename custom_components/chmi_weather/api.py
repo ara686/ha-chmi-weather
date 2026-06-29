@@ -17,14 +17,20 @@ from .const import (
     CHMI_RECENT_DAILY_BASE_URL,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     ELEMENT_APPARENT_TEMPERATURE,
+    ELEMENT_CLOUD_COVERAGE,
     ELEMENT_DAILY_PRECIPITATION,
+    ELEMENT_DEW_POINT,
     ELEMENT_HUMIDITY,
+    ELEMENT_PAST_WEATHER_1,
+    ELEMENT_PAST_WEATHER_2,
     ELEMENT_PRECIPITATION_1H,
     ELEMENT_PRECIPITATION_10M,
+    ELEMENT_PRESENT_WEATHER,
     ELEMENT_PRESSURE,
     ELEMENT_TEMPERATURE,
     ELEMENT_TEMPERATURE_MAX_10M,
     ELEMENT_TEMPERATURE_MIN_10M,
+    ELEMENT_VISIBILITY,
     ELEMENT_WIND_DIRECTION,
     ELEMENT_WIND_DIRECTION_AVG,
     ELEMENT_WIND_GUST,
@@ -32,6 +38,7 @@ from .const import (
     ELEMENT_WIND_SPEED,
     ELEMENT_WIND_SPEED_AVG,
     OBSERVATION_VALUE_FIELDS,
+    WEATHER_CONDITION_ELEMENTS,
 )
 from .models import (
     ChmiDailySummary,
@@ -89,6 +96,7 @@ class ChmiApiClient:
         interval_minutes: int = DEFAULT_OBSERVATION_INTERVAL_MINUTES,
         precipitation_timezone: tzinfo | None = None,
         precipitation_1h_interval_minutes: int | None = None,
+        weather_condition_interval_minutes: int | None = None,
     ) -> ChmiObservation:
         """Return current observations for a station, falling back to yesterday."""
         today = datetime.now(UTC).date()
@@ -121,20 +129,41 @@ class ChmiApiClient:
                     precipitation_date=datetime.now(precipitation_timezone).date(),
                 )
 
-            if (
-                precipitation_1h_interval_minutes is not None
-                and precipitation_1h_interval_minutes != interval_minutes
-            ):
-                hourly_observation = await self._async_get_optional_current_observation(
+            optional_observations: dict[int, ChmiObservation | None] = {}
+            if precipitation_1h_interval_minutes is not None:
+                optional_observations[precipitation_1h_interval_minutes] = None
+            if weather_condition_interval_minutes is not None:
+                optional_observations[weather_condition_interval_minutes] = None
+
+            for optional_interval_minutes in tuple(optional_observations):
+                if optional_interval_minutes == interval_minutes:
+                    optional_observations[optional_interval_minutes] = observation
+                    continue
+                optional_observations[
+                    optional_interval_minutes
+                ] = await self._async_get_optional_current_observation(
                     station_id,
                     today,
-                    interval_minutes=precipitation_1h_interval_minutes,
+                    interval_minutes=optional_interval_minutes,
                 )
-                if (
-                    hourly_observation is not None
-                    and hourly_observation.precipitation_1h is not None
-                ):
-                    _apply_observed_precipitation_1h(observation, hourly_observation)
+
+            precipitation_observation = optional_observations.get(
+                precipitation_1h_interval_minutes
+            )
+            if (
+                precipitation_observation is not None
+                and precipitation_observation.precipitation_1h is not None
+            ):
+                _apply_observed_precipitation_1h(observation, precipitation_observation)
+
+            weather_condition_observation = optional_observations.get(
+                weather_condition_interval_minutes
+            )
+            if weather_condition_observation is not None:
+                _apply_weather_condition_observation(
+                    observation,
+                    weather_condition_observation,
+                )
             return observation
 
         raise last_error or ChmiApiDataError("No usable CHMI observations found")
@@ -455,6 +484,12 @@ def parse_current_observations(
         wind_direction=_selected_value(selected, ELEMENT_WIND_DIRECTION),
         wind_direction_avg=_selected_value(selected, ELEMENT_WIND_DIRECTION_AVG),
         wind_gust_direction=_selected_value(selected, ELEMENT_WIND_GUST_DIRECTION),
+        cloud_coverage=_selected_value(selected, ELEMENT_CLOUD_COVERAGE),
+        dew_point=_selected_value(selected, ELEMENT_DEW_POINT),
+        visibility_code=_selected_value(selected, ELEMENT_VISIBILITY),
+        present_weather_code=_selected_value(selected, ELEMENT_PRESENT_WEATHER),
+        past_weather_code_1=_selected_value(selected, ELEMENT_PAST_WEATHER_1),
+        past_weather_code_2=_selected_value(selected, ELEMENT_PAST_WEATHER_2),
         precipitation_1h=precipitation_1h,
         precipitation_today=_precipitation_total(precipitation_samples),
         precipitation_samples=precipitation_samples,
@@ -1118,4 +1153,33 @@ def _apply_observed_precipitation_1h(
         )
     observation.available_elements = tuple(
         sorted({*observation.available_elements, ELEMENT_PRECIPITATION_1H})
+    )
+
+
+def _apply_weather_condition_observation(
+    observation: ChmiObservation,
+    condition_observation: ChmiObservation,
+) -> None:
+    for element_field in (
+        "cloud_coverage",
+        "dew_point",
+        "visibility_code",
+        "present_weather_code",
+        "past_weather_code_1",
+        "past_weather_code_2",
+    ):
+        value = getattr(condition_observation, element_field)
+        if value is not None:
+            setattr(observation, element_field, value)
+    observation.available_elements = tuple(
+        sorted(
+            {
+                *observation.available_elements,
+                *(
+                    element
+                    for element in condition_observation.available_elements
+                    if element in WEATHER_CONDITION_ELEMENTS
+                ),
+            }
+        )
     )

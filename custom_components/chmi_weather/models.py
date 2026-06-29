@@ -33,6 +33,12 @@ class ChmiObservation:
     wind_speed_avg: float | None = None
     wind_direction_avg: float | None = None
     wind_gust_direction: float | None = None
+    cloud_coverage: float | None = None
+    dew_point: float | None = None
+    visibility_code: float | None = None
+    present_weather_code: float | None = None
+    past_weather_code_1: float | None = None
+    past_weather_code_2: float | None = None
     precipitation_1h: float | None = None
     precipitation_today: float | None = None
     daily_summary_date: date | None = None

@@ -140,6 +140,30 @@ def test_parser_reads_observed_hourly_precipitation() -> None:
     assert observation.quality_by_element["SRA1H"] == 5.0
 
 
+def test_parser_reads_synop_weather_condition_elements() -> None:
+    payload = deepcopy(_hourly_fixture())
+    rows = _values(payload)
+    rows.extend(
+        [
+            [STATION_ID, "N", "2026-06-26T09:00:00Z", 8.0, "", 0.0],
+            [STATION_ID, "Td", "2026-06-26T09:00:00Z", 16.4, "", 0.0],
+            [STATION_ID, "VV", "2026-06-26T09:00:00Z", 70.0, "", 0.0],
+            [STATION_ID, "ww", "2026-06-26T09:00:00Z", 61.0, "", 0.0],
+            [STATION_ID, "W1", "2026-06-26T09:00:00Z", 6.0, "", 0.0],
+            [STATION_ID, "W2", "2026-06-26T09:00:00Z", 2.0, "", 0.0],
+        ]
+    )
+
+    observation = parse_current_observations(payload, STATION_ID)
+
+    assert observation.cloud_coverage == 8.0
+    assert observation.dew_point == 16.4
+    assert observation.visibility_code == 70.0
+    assert observation.present_weather_code == 61.0
+    assert observation.past_weather_code_1 == 6.0
+    assert observation.past_weather_code_2 == 2.0
+
+
 def test_api_client_calculates_precipitation_today_for_local_date(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -243,6 +267,50 @@ def test_api_client_prefers_companion_hourly_precipitation(
     assert observation.available_elements[-1] == "TPM"
     assert "SRA1H" in observation.available_elements
     assert observation.quality_by_element["SRA1H"] == 5.0
+    assert client.calls == [(date(2026, 6, 26), 10), (date(2026, 6, 26), 60)]
+
+
+def test_api_client_applies_companion_hourly_weather_condition_elements(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 26, 9, 30, tzinfo=tz or UTC)
+
+    class PayloadClient(ChmiApiClient):
+        def __init__(self):
+            super().__init__(session=object())
+            self.calls = []
+
+        async def async_get_current_observations_for_date(
+            self,
+            station_id: str,
+            day: date,
+            *,
+            interval_minutes: int = 10,
+        ):
+            self.calls.append((day, interval_minutes))
+            if interval_minutes == 60:
+                payload = deepcopy(_hourly_fixture())
+                _values(payload).append(
+                    [STATION_ID, "ww", "2026-06-26T09:00:00Z", 61.0, "", 0.0]
+                )
+                return parse_current_observations(payload, station_id)
+            return parse_current_observations(_fixture(), station_id)
+
+    client = PayloadClient()
+    monkeypatch.setattr(api, "datetime", FrozenDatetime)
+
+    observation = asyncio.run(
+        client.async_get_current_observations(
+            STATION_ID,
+            weather_condition_interval_minutes=60,
+        )
+    )
+
+    assert observation.present_weather_code == 61.0
+    assert "ww" in observation.available_elements
     assert client.calls == [(date(2026, 6, 26), 10), (date(2026, 6, 26), 60)]
 
 
