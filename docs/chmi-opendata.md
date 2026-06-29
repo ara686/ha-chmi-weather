@@ -161,5 +161,7 @@ falls back to its built-in quality-code descriptions. If the `meta3` file is
 temporarily unavailable, flag descriptions are omitted but the raw selected
 `FLAG` values remain available in diagnostics.
 
-The data quality values are intentionally not exposed as regular sensor
-attributes to avoid high-churn state attributes.
+The data quality values are intentionally not exposed as regular sensors or
+regular sensor attributes. They describe the provenance and usability of source
+rows rather than a user-facing weather measurement, and exposing one sensor per
+element would create noisy entities that are better handled through diagnostics.
