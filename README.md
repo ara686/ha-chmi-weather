@@ -7,9 +7,10 @@
 > emergency, operational, or compliance decisions.
 
 CHMI Weather is a Home Assistant custom integration for weather station data from
-ČHMÚ OpenData. The MVP reads current observations for one configured station at
-the shortest interval advertised by official CHMI metadata, creates a standard
-`weather` entity, and can expose diagnostic sensors for the raw measured values.
+ČHMÚ OpenData. The integration reads measured data for one configured station,
+including current observations at the shortest interval advertised by official
+CHMI metadata and selected recent daily station summaries. It creates a standard
+`weather` entity and can expose diagnostic sensors for the raw measured values.
 The project scope is limited to measured CHMI station data published into Home
 Assistant.
 
@@ -24,10 +25,11 @@ CHMI, Home Assistant, HACS, Nabu Casa, or the Open Home Foundation.
 
 ## Status
 
-This repository currently contains a development-preview MVP for current CHMI
-OpenData station observations. APIs, entity behavior, configuration flow,
-diagnostics, and supported station data may change without notice until the
-project reaches a stable release.
+This repository currently contains a development-preview Home Assistant custom
+integration for CHMI OpenData station observations and selected station
+summaries. APIs, entity behavior, configuration flow, diagnostics, and supported
+station data may change without notice until the project reaches a stable
+release.
 
 During setup, Home Assistant suggests nearby stations from the official CHMI
 station metadata and stores the selected WSI / station ID.
@@ -148,11 +150,12 @@ All entities are attached to one Home Assistant device:
 - Name: CHMI Dobřichovice
 - Identifier: `("chmi_weather", "0-203-0-11521")`
 
-## Known MVP limitations
+## Known limitations
 
 - The integration is under active development and is not production-ready.
-- The MVP uses only current measured data from one station. Future work stays
-  limited to measured station data.
+- The integration currently uses measured data for one configured station,
+  including current observations and selected official CHMI recent daily station
+  summaries. Future work stays limited to measured station data.
 - Text forecasts, weather alerts/warnings, radar products, image entities, and
   camera entities are not planned.
 - The weather condition is best-effort. When the station advertises SYNOP
