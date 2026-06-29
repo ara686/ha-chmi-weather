@@ -74,6 +74,36 @@ files before calculating `Precipitation today` for the Home Assistant local date
 The parser also keeps the selected row's `QUALITY` and `FLAG` values for
 diagnostics.
 
+## Recent daily summaries
+
+Base URL:
+
+```text
+https://opendata.chmi.cz/meteorology/climate/recent/data/daily
+```
+
+File pattern:
+
+```text
+dly-{station_id}-{YYYYMM}.json
+```
+
+`YYYYMM` is selected from the last completed date in the Home Assistant local
+timezone. CHMI creates daily files after the day ends and the files contain
+station daily rows from the first day of the month through the latest published
+day.
+
+Observed header:
+
+```text
+STATION,ELEMENT,VTYPE,DT,VAL,FLAG,QUALITY
+```
+
+The integration reads the selected station rows for the last completed local
+date and exposes daily summary sensors for CHMI `SRA`, `TMA`, `TMI`, and `Fmax`
+when those values are present. It also sums usable `SRA` rows from the same
+monthly daily file up to that summary date for `CHMI month precipitation`.
+
 ## Station metadata
 
 Base URL:
@@ -134,6 +164,11 @@ pressure `P` is not advertised for the selected interval.
 | Precipitation 10m | `SRA10M` |
 | Precipitation 1h | `SRA1H`, or derived from `SRA10M` |
 | Precipitation today | derived from `SRA10M` |
+| Yesterday precipitation | `SRA` from recent daily |
+| Yesterday temperature maximum | `TMA` from recent daily |
+| Yesterday temperature minimum | `TMI` from recent daily |
+| Yesterday wind gust maximum | `Fmax` from recent daily |
+| CHMI month precipitation | sum of `SRA` from recent daily |
 | Wind speed | `F` |
 | Average wind speed | `Fprum` |
 | Wind gust | `Fmax` |

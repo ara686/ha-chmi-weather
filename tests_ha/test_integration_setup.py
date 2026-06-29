@@ -23,6 +23,7 @@ from custom_components.chmi_weather.const import (
     DOMAIN,
 )
 from custom_components.chmi_weather.models import (
+    ChmiDailySummary,
     ChmiObservation,
     ChmiStationCapabilities,
 )
@@ -46,6 +47,22 @@ class FakeChmiApiClient:
     async def async_get_quality_descriptions(self) -> dict[int, str]:
         """Return CHMI quality-code descriptions."""
         return {0: "Good/Kvalitni hodnota", 5: "Unknown/Kvalita neznama"}
+
+    async def async_get_recent_daily_summary(
+        self,
+        station_id: str,
+        summary_date,
+    ) -> ChmiDailySummary:
+        """Return recent daily summary values."""
+        return ChmiDailySummary(
+            station_id=station_id,
+            summary_date=summary_date,
+            yesterday_precipitation=0.8,
+            yesterday_temperature_max=30.4,
+            yesterday_temperature_min=13.2,
+            yesterday_wind_gust_max=6.8,
+            month_precipitation_chmi=3.4,
+        )
 
     async def async_get_station_capabilities(
         self,
@@ -171,6 +188,21 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     precipitation_today_state = hass.states.get(
         "sensor.chmi_dobrichovice_precipitation_today"
     )
+    yesterday_precipitation_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_precipitation"
+    )
+    yesterday_temperature_max_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_temperature_maximum"
+    )
+    yesterday_temperature_min_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_temperature_minimum"
+    )
+    yesterday_wind_gust_max_state = hass.states.get(
+        "sensor.chmi_dobrichovice_yesterday_wind_gust_maximum"
+    )
+    month_precipitation_state = hass.states.get(
+        "sensor.chmi_dobrichovice_chmi_month_precipitation"
+    )
     wind_speed_state = hass.states.get("sensor.chmi_dobrichovice_wind_speed")
     wind_speed_avg_state = hass.states.get(
         "sensor.chmi_dobrichovice_average_wind_speed"
@@ -228,6 +260,16 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     assert precipitation_hour_state.state == "1.2"
     assert precipitation_today_state is not None
     assert precipitation_today_state.state == "4.8"
+    assert yesterday_precipitation_state is not None
+    assert yesterday_precipitation_state.state == "0.8"
+    assert yesterday_temperature_max_state is not None
+    assert yesterday_temperature_max_state.state == "30.4"
+    assert yesterday_temperature_min_state is not None
+    assert yesterday_temperature_min_state.state == "13.2"
+    assert yesterday_wind_gust_max_state is not None
+    assert yesterday_wind_gust_max_state.state == "24.48"
+    assert month_precipitation_state is not None
+    assert month_precipitation_state.state == "3.4"
     assert wind_speed_state is not None
     assert wind_speed_state.state == "4.68"
     assert wind_speed_avg_state is not None

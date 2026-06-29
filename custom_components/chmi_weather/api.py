@@ -14,8 +14,10 @@ from .const import (
     CHMI_BASE_URL,
     CHMI_ELEMENT_BY_FIELD,
     CHMI_METADATA_BASE_URL,
+    CHMI_RECENT_DAILY_BASE_URL,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     ELEMENT_APPARENT_TEMPERATURE,
+    ELEMENT_DAILY_PRECIPITATION,
     ELEMENT_HUMIDITY,
     ELEMENT_PRECIPITATION_1H,
     ELEMENT_PRECIPITATION_10M,
@@ -32,6 +34,7 @@ from .const import (
     OBSERVATION_VALUE_FIELDS,
 )
 from .models import (
+    ChmiDailySummary,
     ChmiNearestStation,
     ChmiObservation,
     ChmiPrecipitationSample,
@@ -69,12 +72,14 @@ class ChmiApiClient:
         *,
         base_url: str = CHMI_BASE_URL,
         metadata_base_url: str = CHMI_METADATA_BASE_URL,
+        recent_daily_base_url: str = CHMI_RECENT_DAILY_BASE_URL,
         timeout: int = DEFAULT_TIMEOUT_SECONDS,
     ) -> None:
         """Initialize the client."""
         self._session = session
         self._base_url = base_url.rstrip("/")
         self._metadata_base_url = metadata_base_url.rstrip("/")
+        self._recent_daily_base_url = recent_daily_base_url.rstrip("/")
         self._timeout = timeout
 
     async def async_get_current_observations(
@@ -332,6 +337,24 @@ class ChmiApiClient:
     def _build_quality_descriptions_url(self, day: date) -> str:
         """Build a CHMI quality description metadata URL."""
         return f"{self._metadata_base_url}/meta4-{day:%Y%m%d}.json"
+
+    async def async_get_recent_daily_summary(
+        self,
+        station_id: str,
+        summary_date: date,
+    ) -> ChmiDailySummary:
+        """Return recent daily summary values for one station date."""
+        url = self._build_recent_daily_url(station_id, summary_date)
+        payload = await self._async_get_json(url)
+        return parse_recent_daily_summary(payload, station_id, summary_date)
+
+    def _build_recent_daily_url(self, station_id: str, month_date: date) -> str:
+        """Build a CHMI recent daily data URL for one station and month."""
+        normalized_station_id = _normalize_station_id(station_id)
+        return (
+            f"{self._recent_daily_base_url}/dly-{normalized_station_id}-"
+            f"{month_date:%Y%m}.json"
+        )
 
     async def _async_get_json(self, url: str) -> Mapping[str, Any]:
         """Fetch a JSON document."""
@@ -658,6 +681,90 @@ def parse_quality_descriptions(payload: Mapping[str, Any]) -> dict[int, str]:
     return descriptions
 
 
+def parse_recent_daily_summary(
+    payload: Mapping[str, Any],
+    station_id: str,
+    summary_date: date,
+) -> ChmiDailySummary:
+    """Parse CHMI recent daily data for one station summary date."""
+    normalized_station_id = _normalize_station_id(station_id)
+    values = _extract_values(payload)
+    if not values:
+        raise ChmiApiDataError("CHMI recent daily response does not contain rows")
+
+    indices = _extract_header_indices(payload)
+    selected: dict[str, tuple[datetime | None, float]] = {}
+    month_precipitation_values: list[float] = []
+
+    for row in values:
+        if not _is_row(row):
+            continue
+
+        station = _row_value(row, indices, "STATION", 0)
+        if str(station).strip() != normalized_station_id:
+            continue
+
+        element = _as_str(_row_value(row, indices, "ELEMENT", 1))
+        observed_at = _parse_datetime(_row_value(row, indices, "DT", 3))
+        value = _as_float(_row_value(row, indices, "VAL", 4))
+        if element is None or observed_at is None or value is None:
+            continue
+
+        observed_date = observed_at.date()
+        if (
+            element == ELEMENT_DAILY_PRECIPITATION
+            and observed_date.year == summary_date.year
+            and observed_date.month == summary_date.month
+            and observed_date <= summary_date
+        ):
+            month_precipitation_values.append(value)
+
+        if observed_date != summary_date:
+            continue
+        if element not in _DAILY_SUMMARY_ELEMENT_BY_FIELD.values():
+            continue
+
+        current = selected.get(element)
+        if current is None or _is_newer_or_equal(observed_at, current[0]):
+            selected[element] = (observed_at, value)
+
+    month_precipitation_chmi = (
+        round(sum(month_precipitation_values), 3)
+        if month_precipitation_values
+        else None
+    )
+    summary = ChmiDailySummary(
+        station_id=normalized_station_id,
+        summary_date=summary_date,
+        yesterday_precipitation=_daily_selected_value(
+            selected,
+            ELEMENT_DAILY_PRECIPITATION,
+        ),
+        yesterday_temperature_max=_daily_selected_value(
+            selected,
+            ELEMENT_TEMPERATURE_MAX_10M,
+        ),
+        yesterday_temperature_min=_daily_selected_value(
+            selected,
+            ELEMENT_TEMPERATURE_MIN_10M,
+        ),
+        yesterday_wind_gust_max=_daily_selected_value(selected, ELEMENT_WIND_GUST),
+        month_precipitation_chmi=month_precipitation_chmi,
+    )
+
+    if not _has_usable_daily_summary(summary):
+        raise ChmiApiDataError("CHMI recent daily response has no usable values")
+    return summary
+
+
+_DAILY_SUMMARY_ELEMENT_BY_FIELD = {
+    "yesterday_precipitation": ELEMENT_DAILY_PRECIPITATION,
+    "yesterday_temperature_max": ELEMENT_TEMPERATURE_MAX_10M,
+    "yesterday_temperature_min": ELEMENT_TEMPERATURE_MIN_10M,
+    "yesterday_wind_gust_max": ELEMENT_WIND_GUST,
+}
+
+
 def _normalize_station_id(station_id: str) -> str:
     normalized = station_id.strip()
     if not normalized or STATION_ID_PATTERN.fullmatch(normalized) is None:
@@ -867,6 +974,29 @@ def _selected_value(
     if item is None:
         return None
     return item[1]
+
+
+def _daily_selected_value(
+    selected: Mapping[str, tuple[datetime | None, float]],
+    element: str,
+) -> float | None:
+    item = selected.get(element)
+    if item is None:
+        return None
+    return item[1]
+
+
+def _has_usable_daily_summary(summary: ChmiDailySummary) -> bool:
+    return any(
+        value is not None
+        for value in (
+            summary.yesterday_precipitation,
+            summary.yesterday_temperature_max,
+            summary.yesterday_temperature_min,
+            summary.yesterday_wind_gust_max,
+            summary.month_precipitation_chmi,
+        )
+    )
 
 
 def _latest_observed_at(

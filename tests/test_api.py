@@ -19,12 +19,16 @@ from custom_components.chmi_weather.api import (
     parse_current_observations,
     parse_flag_descriptions,
     parse_quality_descriptions,
+    parse_recent_daily_summary,
     parse_station_capabilities,
     parse_station_metadata,
     parse_station_metadata_list,
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current.json"
+RECENT_DAILY_FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "chmi_dobrichovice_recent_daily.json"
+)
 HOURLY_FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "chmi_dobrichovice_current_1h.json"
 )
@@ -47,6 +51,10 @@ def _fixture() -> dict:
 
 def _hourly_fixture() -> dict:
     return json.loads(HOURLY_FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def _recent_daily_fixture() -> dict:
+    return json.loads(RECENT_DAILY_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def _metadata_fixture() -> dict:
@@ -449,3 +457,37 @@ def test_api_client_builds_quality_descriptions_url() -> None:
         url == "https://opendata.chmi.cz/meteorology/climate/now/metadata/"
         "meta4-20260626.json"
     )
+
+
+def test_parser_reads_recent_daily_summary() -> None:
+    summary = parse_recent_daily_summary(
+        _recent_daily_fixture(),
+        STATION_ID,
+        date(2026, 6, 28),
+    )
+
+    assert summary.station_id == STATION_ID
+    assert summary.summary_date == date(2026, 6, 28)
+    assert summary.yesterday_precipitation == 0.8
+    assert summary.yesterday_temperature_max == 30.4
+    assert summary.yesterday_temperature_min == 13.2
+    assert summary.yesterday_wind_gust_max == 6.8
+    assert summary.month_precipitation_chmi == 3.4
+
+
+def test_api_client_builds_recent_daily_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    url = client._build_recent_daily_url(STATION_ID, date(2026, 6, 28))
+
+    assert (
+        url == "https://opendata.chmi.cz/meteorology/climate/recent/data/daily/"
+        "dly-0-203-0-11521-202606.json"
+    )
+
+
+def test_api_client_rejects_unsafe_station_id_for_recent_daily_url() -> None:
+    client = ChmiApiClient(session=object())
+
+    with pytest.raises(ChmiApiDataError):
+        client._build_recent_daily_url("../0-203-0-11521?x=1", date(2026, 6, 28))

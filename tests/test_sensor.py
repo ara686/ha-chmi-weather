@@ -33,6 +33,11 @@ def _observation() -> ChmiObservation:
         wind_gust_direction=200.0,
         precipitation_1h=1.2,
         precipitation_today=4.8,
+        yesterday_precipitation=0.8,
+        yesterday_temperature_max=30.4,
+        yesterday_temperature_min=13.2,
+        yesterday_wind_gust_max=6.8,
+        month_precipitation_chmi=3.4,
         available_elements=(
             "D",
             "Dmax",
@@ -132,6 +137,51 @@ def test_precipitation_total_sensor_native_value() -> None:
     assert entity.state_class == "total_increasing"
 
 
+def test_yesterday_precipitation_sensor_native_value() -> None:
+    entity = _entity("yesterday_precipitation")
+
+    assert entity.native_value == 0.8
+    assert entity.native_unit_of_measurement == "mm"
+    assert entity.device_class == "precipitation"
+    assert entity.state_class == "measurement"
+
+
+def test_yesterday_temperature_max_sensor_native_value() -> None:
+    entity = _entity("yesterday_temperature_max")
+
+    assert entity.native_value == 30.4
+    assert entity.native_unit_of_measurement == "°C"
+    assert entity.device_class == "temperature"
+    assert entity.state_class == "measurement"
+
+
+def test_yesterday_temperature_min_sensor_native_value() -> None:
+    entity = _entity("yesterday_temperature_min")
+
+    assert entity.native_value == 13.2
+    assert entity.native_unit_of_measurement == "°C"
+    assert entity.device_class == "temperature"
+    assert entity.state_class == "measurement"
+
+
+def test_yesterday_wind_gust_max_sensor_native_value() -> None:
+    entity = _entity("yesterday_wind_gust_max")
+
+    assert entity.native_value == 6.8
+    assert entity.native_unit_of_measurement == "m/s"
+    assert entity.device_class == "wind_speed"
+    assert entity.state_class == "measurement"
+
+
+def test_month_precipitation_chmi_sensor_native_value() -> None:
+    entity = _entity("month_precipitation_chmi")
+
+    assert entity.native_value == 3.4
+    assert entity.native_unit_of_measurement == "mm"
+    assert entity.device_class == "precipitation"
+    assert entity.state_class == "measurement"
+
+
 def test_last_successful_poll_sensor_native_value() -> None:
     entity = _entity("last_successful_poll")
 
@@ -167,6 +217,11 @@ def test_supported_sensor_descriptions_follow_station_capabilities() -> None:
     assert "precipitation_10m" in keys
     assert "precipitation_1h" in keys
     assert "precipitation_today" in keys
+    assert "yesterday_precipitation" in keys
+    assert "yesterday_temperature_max" in keys
+    assert "yesterday_temperature_min" in keys
+    assert "yesterday_wind_gust_max" in keys
+    assert "month_precipitation_chmi" in keys
     assert "wind_speed" in keys
     assert "wind_speed_avg" in keys
     assert "wind_gust" in keys
@@ -185,6 +240,8 @@ def test_hourly_precipitation_sensor_supports_sra1h_only_station() -> None:
     assert "precipitation_1h" in keys
     assert "precipitation_10m" not in keys
     assert "precipitation_today" not in keys
+    assert "yesterday_precipitation" in keys
+    assert "month_precipitation_chmi" in keys
 
 
 def test_supported_sensor_descriptions_keep_legacy_entries() -> None:

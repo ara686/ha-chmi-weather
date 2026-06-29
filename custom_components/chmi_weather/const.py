@@ -31,6 +31,9 @@ CONF_DIAGNOSTIC_SENSORS = "diagnostic_sensors"
 
 CHMI_BASE_URL = "https://opendata.chmi.cz/meteorology/climate/now/data"
 CHMI_METADATA_BASE_URL = "https://opendata.chmi.cz/meteorology/climate/now/metadata"
+CHMI_RECENT_DAILY_BASE_URL = (
+    "https://opendata.chmi.cz/meteorology/climate/recent/data/daily"
+)
 
 ELEMENT_TEMPERATURE = "T"
 ELEMENT_TEMPERATURE_MAX_10M = "TMA"
@@ -46,6 +49,7 @@ ELEMENT_WIND_GUST = "Fmax"
 ELEMENT_WIND_DIRECTION = "D"
 ELEMENT_WIND_DIRECTION_AVG = "Dprum"
 ELEMENT_WIND_GUST_DIRECTION = "Dmax"
+ELEMENT_DAILY_PRECIPITATION = "SRA"
 
 OBSERVATION_VALUE_FIELDS = (
     "temperature",
