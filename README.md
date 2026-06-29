@@ -110,10 +110,10 @@ CHMI for the latest station observation. `Last successful poll` shows when Home
 Assistant last successfully downloaded data from CHMI OpenData.
 
 `Precipitation 10m` is the raw CHMI `SRA10M` interval value. `Precipitation 1h`
-is the sum of the latest hour of available `SRA10M` rows in the selected CHMI
-daily file. `Precipitation today` is the cumulative sum of `SRA10M` rows in the
-current CHMI daily file and uses the `total_increasing` state class so Home
-Assistant can derive calendar rainfall totals with Utility Meter helpers.
+is the sum of the latest hour of available `SRA10M` rows. `Precipitation today`
+is the cumulative sum of `SRA10M` rows for the current Home Assistant local date
+and uses the `total_increasing` state class so Home Assistant can derive
+calendar rainfall totals with Utility Meter helpers.
 
 All entities are attached to one Home Assistant device:
 
@@ -136,9 +136,9 @@ All entities are attached to one Home Assistant device:
 - The Dobřichovice `meta2` metadata currently does not advertise pressure
   element `P`, so the pressure diagnostic sensor is not created for this station.
 - Direct `Precipitation 1h` and `Precipitation today` values are limited to rows
-  available in the selected CHMI daily file. Home Assistant Utility Meter history
-  continues from the states recorded by Home Assistant after the integration is
-  installed.
+  available in the current and previous UTC CHMI daily files. Home Assistant
+  Utility Meter history continues from the states recorded by Home Assistant
+  after the integration is installed.
 
 ## Home Assistant statistics
 

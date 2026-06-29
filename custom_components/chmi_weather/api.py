@@ -7,7 +7,7 @@ import json
 import math
 import re
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, tzinfo
 from typing import Any
 
 from .const import (
@@ -75,20 +75,35 @@ class ChmiApiClient:
         station_id: str,
         *,
         interval_minutes: int = DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+        precipitation_timezone: tzinfo | None = None,
     ) -> ChmiObservation:
         """Return current observations for a station, falling back to yesterday."""
         today = datetime.now(UTC).date()
         last_error: ChmiApiError | None = None
+        observations: list[ChmiObservation] = []
 
         for day in (today, today - timedelta(days=1)):
             try:
-                return await self.async_get_current_observations_for_date(
+                observation = await self.async_get_current_observations_for_date(
                     station_id,
                     day,
                     interval_minutes=interval_minutes,
                 )
             except (ChmiApiNotFoundError, ChmiApiDataError) as err:
                 last_error = err
+                continue
+
+            if precipitation_timezone is None:
+                return observation
+            observations.append(observation)
+
+        if observations:
+            return _with_precipitation_statistics(
+                observations[0],
+                observations,
+                precipitation_timezone=precipitation_timezone,
+                precipitation_date=datetime.now(precipitation_timezone).date(),
+            )
 
         raise last_error or ChmiApiDataError("No usable CHMI observations found")
 
@@ -708,4 +723,40 @@ def _precipitation_last_hour(
             if threshold < sample.observed_at <= latest_observed_at
         ),
         3,
+    )
+
+
+def _with_precipitation_statistics(
+    observation: ChmiObservation,
+    observations: Sequence[ChmiObservation],
+    *,
+    precipitation_timezone: tzinfo,
+    precipitation_date: date,
+) -> ChmiObservation:
+    samples = _combined_precipitation_samples(observations)
+    local_day_samples = [
+        sample
+        for sample in samples
+        if sample.observed_at.astimezone(precipitation_timezone).date()
+        == precipitation_date
+    ]
+
+    observation.precipitation_samples = samples
+    observation.precipitation_1h = _precipitation_last_hour(samples)
+    observation.precipitation_today = _precipitation_total(local_day_samples)
+    return observation
+
+
+def _combined_precipitation_samples(
+    observations: Sequence[ChmiObservation],
+) -> tuple[ChmiPrecipitationSample, ...]:
+    return tuple(
+        sorted(
+            (
+                sample
+                for observation in observations
+                for sample in observation.precipitation_samples
+            ),
+            key=lambda sample: sample.observed_at,
+        )
     )

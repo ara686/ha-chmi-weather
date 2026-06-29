@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -36,6 +37,7 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
         self.client = client
         self.last_observation: ChmiObservation | None = None
         self.last_successful_poll: datetime | None = None
+        self.precipitation_timezone = _hass_timezone(hass)
         self.observation_interval_minutes = max(
             1,
             int(
@@ -76,6 +78,7 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             observation = await self.client.async_get_current_observations(
                 station_id,
                 interval_minutes=self.observation_interval_minutes,
+                precipitation_timezone=self.precipitation_timezone,
             )
         except ChmiApiError as err:
             raise UpdateFailed(f"Failed to update CHMI observations: {err}") from err
@@ -93,3 +96,16 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             self.last_successful_poll,
         )
         return observation
+
+
+def _hass_timezone(hass: HomeAssistant) -> tzinfo:
+    config = getattr(hass, "config", None)
+    time_zone = getattr(config, "time_zone", None)
+    if not time_zone:
+        return UTC
+
+    try:
+        return ZoneInfo(str(time_zone))
+    except ZoneInfoNotFoundError:
+        _LOGGER.warning("Invalid Home Assistant timezone %s; using UTC", time_zone)
+        return UTC

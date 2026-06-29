@@ -45,8 +45,9 @@ class SuccessfulClient:
         station_id: str,
         *,
         interval_minutes: int,
+        precipitation_timezone,
     ):
-        self.calls.append((station_id, interval_minutes))
+        self.calls.append((station_id, interval_minutes, precipitation_timezone))
         return _observation()
 
 
@@ -58,6 +59,7 @@ class FailingClient:
         station_id: str,
         *,
         interval_minutes: int,
+        precipitation_timezone,
     ):
         raise ChmiApiDataError("bad data")
 
@@ -108,4 +110,17 @@ def test_coordinator_records_last_successful_poll() -> None:
     assert coordinator.last_observation == _observation()
     assert coordinator.last_successful_poll is not None
     assert coordinator.last_successful_poll.tzinfo == UTC
-    assert client.calls == [("0-203-0-11521", 10)]
+    assert client.calls == [("0-203-0-11521", 10, UTC)]
+
+
+def test_coordinator_passes_home_assistant_timezone() -> None:
+    client = SuccessfulClient()
+    coordinator = ChmiDataUpdateCoordinator(
+        hass=SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Prague")),
+        config_entry=_config_entry(),
+        client=client,
+    )
+
+    asyncio.run(coordinator._async_update_data())
+
+    assert client.calls[0][2].key == "Europe/Prague"
