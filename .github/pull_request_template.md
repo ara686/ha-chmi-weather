@@ -11,6 +11,8 @@
 - [ ] pip-audit --local --skip-editable --progress-spinner off in a clean dev environment
 - [ ] pytest tests_ha -o asyncio_mode=auto against latest Home Assistant stable
 - [ ] pytest tests_ha -o asyncio_mode=auto against latest Home Assistant beta/pre-release
+- [ ] GitHub Actions HACS validation passed
+- [ ] GitHub Actions hassfest validation passed
 
 ## Public Safety
 

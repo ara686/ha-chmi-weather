@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.2.3
+
+- Added HACS repository validation and Home Assistant hassfest metadata
+  validation to GitHub Actions.
+- Updated `hacs.json` to use the current HACS manifest schema.
+- Compatibility: validated with Home Assistant stable and beta test harnesses,
+  HACS repository validation, and Home Assistant hassfest validation.
+- Migration: no user action required.
+- Breaking changes: none.
+
 ## 0.2.2
 
 - Excluded `pytest-homeassistant-custom-component` from Dependabot version
