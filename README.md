@@ -226,6 +226,8 @@ pytest tests_ha -o asyncio_mode=auto
 without loading Home Assistant's pytest plugin into the stub test environment.
 `pytest tests_ha -o asyncio_mode=auto` loads the custom integration through Home
 Assistant test fixtures and should be run before deployment-oriented changes.
+GitHub Actions also runs HACS repository validation and Home Assistant hassfest
+metadata validation on pull requests, pushes, scheduled checks, and manual runs.
 
 See `docs/development.md` and `AGENTS.md` before changing parser or Home
 Assistant integration behavior.

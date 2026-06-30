@@ -89,6 +89,8 @@ next stable Home Assistant release.
 
 The GitHub Actions workflow runs:
 
+- HACS repository validation,
+- Home Assistant hassfest metadata validation,
 - unit checks on every push and pull request,
 - Home Assistant stable integration tests,
 - Home Assistant beta/pre-release integration tests,
@@ -139,11 +141,12 @@ Before making the repository public or publishing a release:
 3. Run the unit, Home Assistant stable, and Home Assistant beta test commands.
 4. Confirm `custom_components/chmi_weather/manifest.json` still has `domain`,
    `documentation`, `issue_tracker`, `codeowners`, `name`, and `version`.
-5. Run Bandit and pip-audit for the published integration code and clean dev
+5. Confirm GitHub Actions HACS validation and hassfest validation pass.
+6. Run Bandit and pip-audit for the published integration code and clean dev
    dependency set.
-6. Confirm the GitHub repository has a short description and relevant topics for
+7. Confirm the GitHub repository has a short description and relevant topics for
    HACS discoverability.
-7. Check GitHub Actions logs because public repository visibility also makes
+8. Check GitHub Actions logs because public repository visibility also makes
    existing public-facing repository activity and CI logs easier to inspect.
 
 ## Workflow
