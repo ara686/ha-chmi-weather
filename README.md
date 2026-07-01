@@ -233,6 +233,13 @@ Assistant test fixtures and should be run before deployment-oriented changes.
 GitHub Actions also runs HACS repository validation and Home Assistant hassfest
 metadata validation on pull requests, pushes, scheduled checks, and manual runs.
 
+Translations live in
+`custom_components/chmi_weather/translations/<language>.json`. English in
+`en.json` is the default text, and Home Assistant selects `cs.json`, `sk.json`,
+or another future language file according to the user's selected Home Assistant
+language. Keep every language file structurally aligned with `en.json`; the
+translation tests enforce this.
+
 See `docs/development.md` and `AGENTS.md` before changing parser or Home
 Assistant integration behavior.
 
