@@ -14,13 +14,20 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     DEGREE,
-    PERCENTAGE,
     EntityCategory,
     UnitOfPrecipitationDepth,
     UnitOfPressure,
     UnitOfSpeed,
     UnitOfTemperature,
 )
+
+try:
+    from homeassistant.const import UnitOfRatio
+except ImportError:
+    from homeassistant.const import PERCENTAGE as UNIT_PERCENTAGE
+else:
+    UNIT_PERCENTAGE = UnitOfRatio.PERCENTAGE
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -111,7 +118,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         translation_key="humidity",
         value_fn=lambda coordinator, observation: observation.humidity,
         required_elements=(ELEMENT_HUMIDITY,),
-        native_unit_of_measurement=PERCENTAGE,
+        native_unit_of_measurement=UNIT_PERCENTAGE,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
     ),

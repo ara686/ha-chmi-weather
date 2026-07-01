@@ -117,7 +117,7 @@ jobs:
       - name: Install latest Home Assistant beta test dependencies
         run: |
           python -m pip install --upgrade pip ".[dev]"
-          python -m pip install --upgrade --pre "pytest-homeassistant-custom-component>=0.13.341"
+          python -m pip install --upgrade --pre "pytest-homeassistant-custom-component>=0.13.343"
 
       - name: Home Assistant beta integration tests
         run: pytest tests_ha -o asyncio_mode=auto
