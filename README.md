@@ -140,6 +140,11 @@ the cumulative sum of `SRA10M` rows for the current Home Assistant local date an
 uses the `total_increasing` state class so Home Assistant can derive calendar
 rainfall totals with Utility Meter helpers.
 
+Rainfall sensors suggest one decimal place for Home Assistant display precision,
+matching the 0.1 mm resolution CHMI commonly publishes. If an existing entity
+still displays whole millimeters, check whether Home Assistant has a stored
+entity display-precision override for that sensor.
+
 `Yesterday precipitation`, `Yesterday temperature maximum`, `Yesterday
 temperature minimum`, `Yesterday wind gust maximum`, and `Precipitation this
 month` come from official CHMI `recent/data/daily` station files. These values
