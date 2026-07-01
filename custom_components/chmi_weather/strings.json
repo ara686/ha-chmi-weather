@@ -82,7 +82,7 @@
         "name": "Yesterday wind gust maximum"
       },
       "month_precipitation_chmi": {
-        "name": "CHMI month precipitation"
+        "name": "Precipitation this month"
       },
       "wind_speed": {
         "name": "Wind speed"

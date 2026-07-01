@@ -203,7 +203,7 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
         "sensor.chmi_dobrichovice_yesterday_wind_gust_maximum"
     )
     month_precipitation_state = hass.states.get(
-        "sensor.chmi_dobrichovice_chmi_month_precipitation"
+        "sensor.chmi_dobrichovice_precipitation_this_month"
     )
     wind_speed_state = hass.states.get("sensor.chmi_dobrichovice_wind_speed")
     wind_speed_avg_state = hass.states.get(

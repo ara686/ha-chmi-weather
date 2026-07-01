@@ -190,7 +190,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
     ),
     ChmiSensorDescription(
         key="month_precipitation_chmi",
-        name="CHMI month precipitation",
+        name="Precipitation this month",
         translation_key="month_precipitation_chmi",
         value_fn=lambda coordinator, observation: observation.month_precipitation_chmi,
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Renamed the monthly precipitation sensor display name from `CHMI month
+  precipitation` to `Precipitation this month` while keeping the existing entity
+  unique ID stable.
+
 ## 0.2.3
 
 - Added HACS repository validation and Home Assistant hassfest metadata

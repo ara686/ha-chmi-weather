@@ -27,7 +27,7 @@ averages from current measured sensors:
 - Yesterday temperature maximum
 - Yesterday temperature minimum
 - Yesterday wind gust maximum
-- CHMI month precipitation
+- Precipitation this month
 
 Common useful characteristics are `value_max`, `value_min`, `mean`,
 `mean_circular`, `sum`, and `total`. Use `mean_circular` for wind direction
@@ -96,7 +96,7 @@ published by CHMI:
 
 - `Yesterday precipitation`: official daily `SRA` value for the last completed
   local date.
-- `CHMI month precipitation`: sum of usable recent daily `SRA` rows in the CHMI
+- `Precipitation this month`: sum of usable recent daily `SRA` rows in the CHMI
   monthly daily file up to that same date.
 
 Use these CHMI recent daily values when you want the upstream daily summaries.
