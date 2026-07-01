@@ -19,6 +19,9 @@ weather stations.
 - Do not fake forecast data.
 - Do not expose forecast through legacy entity attributes.
 - Prefer small incremental changes.
+- Merge normal development changes only into `develop`; do not merge into
+  `main`, create release PRs, publish tags, or publish GitHub releases unless
+  the user explicitly asks for a `main` release or merge.
 - After each meaningful change, run ruff and pytest.
 - If endpoint structure is uncertain, add or update a fixture first.
 - Use English for entity names, variables, code comments and docs.
