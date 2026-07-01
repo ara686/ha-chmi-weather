@@ -42,11 +42,11 @@ be tested with the Home Assistant test harness in `tests_ha/`.
 Install and run against the latest checked stable Home Assistant test package:
 
 ```bash
-python -m pip install -e ".[dev,ha-stable]"
+python -m pip install ".[dev,ha-stable]"
 pytest tests_ha -o asyncio_mode=auto
 ```
 
-As of 2026-06-27, the latest checked stable Home Assistant package is
+As of 2026-07-01, the latest checked stable Home Assistant package is
 `2026.6.4`, via `pytest-homeassistant-custom-component==0.13.340`. Home
 Assistant stable testing currently requires Python 3.14.
 
@@ -77,13 +77,13 @@ Run the beta/pre-release check before deployment-oriented changes and when Home
 Assistant publishes a beta:
 
 ```bash
-python -m pip install -e ".[dev]"
-python -m pip install --upgrade --pre "pytest-homeassistant-custom-component>=0.13.341"
+python -m pip install ".[dev]"
+python -m pip install --upgrade --pre "pytest-homeassistant-custom-component>=0.13.343"
 pytest tests_ha -o asyncio_mode=auto
 ```
 
-As of 2026-06-27, that beta path installs Home Assistant `2026.7.0b1`, via
-`pytest-homeassistant-custom-component==0.13.341`. If the beta job fails because
+As of 2026-07-01, that beta path installs Home Assistant `2026.7.0b3`, via
+`pytest-homeassistant-custom-component==0.13.343`. If the beta job fails because
 of a Home Assistant API change, capture the failure and warn users before the
 next stable Home Assistant release.
 
@@ -95,6 +95,19 @@ The GitHub Actions workflow runs:
 - Home Assistant stable integration tests,
 - Home Assistant beta/pre-release integration tests,
 - a daily scheduled run to surface new Home Assistant compatibility issues.
+
+## Translations
+
+Custom integration translations live in
+`custom_components/chmi_weather/translations/<language>.json`. Do not add a
+`strings.json` file for this custom integration. Home Assistant Core uses
+`strings.json` and `[%key:...]` placeholders as build-time features, but custom
+integrations are loaded directly from complete per-language translation files.
+
+Keep `translations/en.json` as the complete English default. Add future
+translations as BCP47 language-code files such as `cs.json` or `sk.json`, and
+keep their key structure identical to `en.json`. Run the translation tests after
+changing config flow labels, options flow labels, or entity translation keys.
 
 ## Branch and Release Workflow
 
@@ -177,6 +190,8 @@ Before making the repository public or publishing a release:
   https://developers.home-assistant.io/docs/core/integration-quality-scale/rules/runtime-data/
 - Home Assistant config flow connection test rule:
   https://developers.home-assistant.io/docs/core/integration-quality-scale/rules/test-before-configure/
+- Home Assistant custom integration localization:
+  https://developers.home-assistant.io/docs/internationalization/custom_integration/
 - Home Assistant weather entity guide:
   https://developers.home-assistant.io/docs/core/entity/weather/
 - pytest-homeassistant-custom-component:

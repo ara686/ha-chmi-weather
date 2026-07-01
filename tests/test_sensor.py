@@ -176,10 +176,25 @@ def test_yesterday_wind_gust_max_sensor_native_value() -> None:
 def test_month_precipitation_chmi_sensor_native_value() -> None:
     entity = _entity("month_precipitation_chmi")
 
+    assert entity.entity_description.name == "Precipitation this month"
     assert entity.native_value == 3.4
     assert entity.native_unit_of_measurement == "mm"
     assert entity.device_class == "precipitation"
     assert entity.state_class == "measurement"
+
+
+def test_precipitation_sensors_suggest_one_decimal_display_precision() -> None:
+    precipitation_sensor_keys = {
+        "precipitation_10m",
+        "precipitation_1h",
+        "precipitation_today",
+        "yesterday_precipitation",
+        "month_precipitation_chmi",
+    }
+
+    for description in SENSOR_DESCRIPTIONS:
+        if description.key in precipitation_sensor_keys:
+            assert description.suggested_display_precision == 1
 
 
 def test_last_successful_poll_sensor_native_value() -> None:

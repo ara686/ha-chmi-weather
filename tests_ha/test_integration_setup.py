@@ -6,7 +6,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 import pytest
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components import chmi_weather
@@ -203,7 +205,7 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
         "sensor.chmi_dobrichovice_yesterday_wind_gust_maximum"
     )
     month_precipitation_state = hass.states.get(
-        "sensor.chmi_dobrichovice_chmi_month_precipitation"
+        "sensor.chmi_dobrichovice_precipitation_this_month"
     )
     wind_speed_state = hass.states.get("sensor.chmi_dobrichovice_wind_speed")
     wind_speed_avg_state = hass.states.get(
@@ -272,6 +274,26 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     assert yesterday_wind_gust_max_state.state == "24.48"
     assert month_precipitation_state is not None
     assert month_precipitation_state.state == "3.4"
+    _assert_sensor_display_precision(
+        hass,
+        "sensor.chmi_dobrichovice_precipitation_1h",
+        1,
+    )
+    _assert_sensor_display_precision(
+        hass,
+        "sensor.chmi_dobrichovice_precipitation_today",
+        1,
+    )
+    _assert_sensor_display_precision(
+        hass,
+        "sensor.chmi_dobrichovice_yesterday_precipitation",
+        1,
+    )
+    _assert_sensor_display_precision(
+        hass,
+        "sensor.chmi_dobrichovice_precipitation_this_month",
+        1,
+    )
     assert wind_speed_state is not None
     assert wind_speed_state.state == "4.68"
     assert wind_speed_avg_state is not None
@@ -282,3 +304,15 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+def _assert_sensor_display_precision(
+    hass: HomeAssistant,
+    entity_id: str,
+    expected_precision: int,
+) -> None:
+    registry_entry = er.async_get(hass).async_get(entity_id)
+    assert registry_entry is not None
+    assert registry_entry.options[SENSOR_DOMAIN]["suggested_display_precision"] == (
+        expected_precision
+    )

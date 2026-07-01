@@ -113,7 +113,7 @@ present in the official `meta2` file, the integration creates:
 - `sensor.chmi_dobrichovice_yesterday_temperature_maximum`
 - `sensor.chmi_dobrichovice_yesterday_temperature_minimum`
 - `sensor.chmi_dobrichovice_yesterday_wind_gust_maximum`
-- `sensor.chmi_dobrichovice_chmi_month_precipitation`
+- `sensor.chmi_dobrichovice_precipitation_this_month`
 - `sensor.chmi_dobrichovice_wind_speed`
 - `sensor.chmi_dobrichovice_average_wind_speed`
 - `sensor.chmi_dobrichovice_wind_gust`
@@ -129,6 +129,10 @@ the displayed name is `Observation time`. It shows the timestamp published by
 CHMI for the latest station observation. `Last successful poll` shows when Home
 Assistant last successfully downloaded data from CHMI OpenData.
 
+Existing Home Assistant installations may also keep the older entity ID
+`sensor.chmi_dobrichovice_chmi_month_precipitation`; the entity unique ID is
+kept stable, but the displayed name is `Precipitation this month`.
+
 `Precipitation 10m` is the raw CHMI `SRA10M` interval value. `Precipitation 1h`
 uses raw CHMI `SRA1H` when the station advertises it; otherwise it falls back to
 the sum of the latest hour of available `SRA10M` rows. `Precipitation today` is
@@ -136,10 +140,15 @@ the cumulative sum of `SRA10M` rows for the current Home Assistant local date an
 uses the `total_increasing` state class so Home Assistant can derive calendar
 rainfall totals with Utility Meter helpers.
 
+Rainfall sensors suggest one decimal place for Home Assistant display precision,
+matching the 0.1 mm resolution CHMI commonly publishes. If an existing entity
+still displays whole millimeters, check whether Home Assistant has a stored
+entity display-precision override for that sensor.
+
 `Yesterday precipitation`, `Yesterday temperature maximum`, `Yesterday
-temperature minimum`, `Yesterday wind gust maximum`, and `CHMI month
-precipitation` come from official CHMI `recent/data/daily` station files. These
-values are CHMI daily summaries for the last completed local date. The monthly
+temperature minimum`, `Yesterday wind gust maximum`, and `Precipitation this
+month` come from official CHMI `recent/data/daily` station files. These values
+are CHMI daily summaries for the last completed local date. The monthly
 precipitation value is the sum of usable daily `SRA` rows in the same CHMI daily
 file up to that summary date.
 
@@ -189,7 +198,7 @@ For rainfall cycles, use `sensor.chmi_dobrichovice_precipitation_today` as the
 source for Home Assistant Utility Meter helpers with `delta_values` left
 disabled. Do not use `sensor.chmi_dobrichovice_precipitation_10m` directly as a
 Utility Meter source; it is a per-observation interval value, not a cumulative
-meter. Use `sensor.chmi_dobrichovice_chmi_month_precipitation` when you want the
+meter. Use `sensor.chmi_dobrichovice_precipitation_this_month` when you want the
 official CHMI month-to-date daily-summary total instead of a Home Assistant
 Utility Meter total built from integration history. See `docs/statistics.md` for
 example hourly, daily, weekly, and monthly rainfall helpers.
@@ -228,6 +237,13 @@ without loading Home Assistant's pytest plugin into the stub test environment.
 Assistant test fixtures and should be run before deployment-oriented changes.
 GitHub Actions also runs HACS repository validation and Home Assistant hassfest
 metadata validation on pull requests, pushes, scheduled checks, and manual runs.
+
+Translations live in
+`custom_components/chmi_weather/translations/<language>.json`. English in
+`en.json` is the default text, and Home Assistant selects `cs.json`, `sk.json`,
+or another future language file according to the user's selected Home Assistant
+language. Keep every language file structurally aligned with `en.json`; the
+translation tests enforce this.
 
 See `docs/development.md` and `AGENTS.md` before changing parser or Home
 Assistant integration behavior.

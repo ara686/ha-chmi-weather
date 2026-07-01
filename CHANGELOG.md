@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 0.2.4
+
+- Added Czech and Slovak Home Assistant translation files and translation tests
+  that keep language files aligned with the English default.
+- Removed `strings.json` and build-time translation placeholders so localization
+  follows current Home Assistant custom integration guidance.
+- Set Home Assistant display precision for precipitation sensors to one decimal
+  place so rainfall values such as 5.6 mm are not shown as whole millimeters by
+  default.
+- Renamed the monthly precipitation sensor display name from `CHMI month
+  precipitation` to `Precipitation this month` while keeping the existing entity
+  unique ID stable.
+- Updated the Home Assistant beta compatibility check baseline to the latest
+  available 2026.7 beta test harness and avoided the new 2026.7 percentage-unit
+  deprecation when the new unit enum is available.
+- Aligned documented Home Assistant compatibility test install commands with the
+  non-editable install mode used by GitHub Actions.
+- Compatibility: validated with Home Assistant stable and beta test harnesses,
+  HACS repository validation, and Home Assistant hassfest validation.
+- Migration: no user action required. Existing precipitation sensors with a
+  manually overridden Home Assistant display precision may need that override
+  removed or changed to show one decimal place.
+- Breaking changes: none.
+
 ## 0.2.3
 
 - Added HACS repository validation and Home Assistant hassfest metadata

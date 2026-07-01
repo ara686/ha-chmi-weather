@@ -14,13 +14,20 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     DEGREE,
-    PERCENTAGE,
     EntityCategory,
     UnitOfPrecipitationDepth,
     UnitOfPressure,
     UnitOfSpeed,
     UnitOfTemperature,
 )
+
+try:
+    from homeassistant.const import UnitOfRatio
+except ImportError:
+    from homeassistant.const import PERCENTAGE as UNIT_PERCENTAGE
+else:
+    UNIT_PERCENTAGE = UnitOfRatio.PERCENTAGE
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -61,6 +68,8 @@ class ChmiSensorDescription(SensorEntityDescription, frozen_or_thawed=True):
     required_elements: tuple[str, ...] = ()
     any_required_elements: tuple[str, ...] = ()
 
+
+PRECIPITATION_DISPLAY_PRECISION = 1
 
 SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
     ChmiSensorDescription(
@@ -109,7 +118,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         translation_key="humidity",
         value_fn=lambda coordinator, observation: observation.humidity,
         required_elements=(ELEMENT_HUMIDITY,),
-        native_unit_of_measurement=PERCENTAGE,
+        native_unit_of_measurement=UNIT_PERCENTAGE,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -132,6 +141,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="precipitation_1h",
@@ -141,6 +151,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         any_required_elements=(ELEMENT_PRECIPITATION_10M, ELEMENT_PRECIPITATION_1H),
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="precipitation_today",
@@ -151,6 +162,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="yesterday_precipitation",
@@ -160,6 +172,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="yesterday_temperature_max",
@@ -190,12 +203,13 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
     ),
     ChmiSensorDescription(
         key="month_precipitation_chmi",
-        name="CHMI month precipitation",
+        name="Precipitation this month",
         translation_key="month_precipitation_chmi",
         value_fn=lambda coordinator, observation: observation.month_precipitation_chmi,
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="wind_speed",

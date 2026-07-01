@@ -4,29 +4,29 @@
     "step": {
       "user": {
         "title": "Poloha stanice",
-        "description": "Pouzijte polohu Home Assistantu nebo zadejte GPS souradnice pro vyhledani nejblizsich stanic CHMI OpenData.",
+        "description": "Pouzite polohu Home Assistantu alebo zadajte GPS suradnice na vyhladanie najblizsich stanic CHMI OpenData.",
         "data": {
           "latitude": "Zemepisna sirka",
-          "longitude": "Zemepisna delka"
+          "longitude": "Zemepisna dlzka"
         }
       },
       "station": {
-        "title": "Stanice CHMI Weather",
-        "description": "Vyberte nejblizsi stanici CHMI OpenData.",
+        "title": "Stanica CHMI Weather",
+        "description": "Vyberte najblizsiu stanicu CHMI OpenData.",
         "data": {
-          "station_id": "Stanice"
+          "station_id": "Stanica"
         }
       }
     },
     "error": {
-      "cannot_connect": "Nelze se pripojit k endpointu CHMI OpenData.",
+      "cannot_connect": "Neda sa pripojit k endpointu CHMI OpenData.",
       "no_station_id": "ID stanice je povinne.",
-      "no_stations": "Pro tyto souradnice nebyly nalezeny zadne stanice CHMI.",
-      "no_data": "Endpoint nevratil zadne pouzitelne hodnoty mereni.",
-      "unknown": "Neocekavana chyba pri overeni stanice."
+      "no_stations": "Pre tieto suradnice neboli najdene ziadne stanice CHMI.",
+      "no_data": "Endpoint nevratil ziadne pouzitelne hodnoty merania.",
+      "unknown": "Neocakavana chyba pri overeni stanice."
     },
     "abort": {
-      "already_configured": "Tato stanice je jiz nakonfigurovana."
+      "already_configured": "Tato stanica je uz nakonfigurovana."
     }
   },
   "options": {
@@ -34,8 +34,8 @@
       "init": {
         "title": "Moznosti CHMI Weather",
         "data": {
-          "update_interval_minutes": "Interval aktualizace v minutach",
-          "diagnostic_sensors": "Zapnout diagnosticke senzory"
+          "update_interval_minutes": "Interval aktualizacie v minutach",
+          "diagnostic_sensors": "Zapnut diagnosticke senzory"
         }
       }
     }
@@ -46,10 +46,10 @@
         "name": "Teplota"
       },
       "temperature_max_10m": {
-        "name": "Teplotni maximum 10m"
+        "name": "Teplotne maximum 10m"
       },
       "temperature_min_10m": {
-        "name": "Teplotni minimum 10m"
+        "name": "Teplotne minimum 10m"
       },
       "apparent_temperature": {
         "name": "Pocitova teplota"
@@ -61,52 +61,52 @@
         "name": "Tlak"
       },
       "precipitation_10m": {
-        "name": "Srazky 10m"
+        "name": "Zrazky 10m"
       },
       "precipitation_1h": {
-        "name": "Srazky 1h"
+        "name": "Zrazky 1h"
       },
       "precipitation_today": {
-        "name": "Srazky dnes"
+        "name": "Zrazky dnes"
       },
       "yesterday_precipitation": {
-        "name": "Srazky vcera"
+        "name": "Zrazky vcera"
       },
       "yesterday_temperature_max": {
-        "name": "Vcerajsi teplotni maximum"
+        "name": "Vcerajsie teplotne maximum"
       },
       "yesterday_temperature_min": {
-        "name": "Vcerajsi teplotni minimum"
+        "name": "Vcerajsie teplotne minimum"
       },
       "yesterday_wind_gust_max": {
-        "name": "Vcerajsi maximum narazu vetru"
+        "name": "Vcerajsie maximum narazu vetra"
       },
       "month_precipitation_chmi": {
-        "name": "Srazky tento mesic"
+        "name": "Zrazky tento mesiac"
       },
       "wind_speed": {
-        "name": "Rychlost vetru"
+        "name": "Rychlost vetra"
       },
       "wind_speed_avg": {
-        "name": "Prumerna rychlost vetru"
+        "name": "Priemerna rychlost vetra"
       },
       "wind_gust": {
-        "name": "Naraz vetru"
+        "name": "Naraz vetra"
       },
       "wind_direction": {
-        "name": "Smer vetru"
+        "name": "Smer vetra"
       },
       "wind_direction_avg": {
-        "name": "Prumerny smer vetru"
+        "name": "Priemerny smer vetra"
       },
       "wind_gust_direction": {
-        "name": "Smer narazu vetru"
+        "name": "Smer narazu vetra"
       },
       "observation_time": {
-        "name": "Cas mereni"
+        "name": "Cas merania"
       },
       "last_successful_poll": {
-        "name": "Posledni uspesne stazeni"
+        "name": "Posledne uspesne stiahnutie"
       }
     }
   }

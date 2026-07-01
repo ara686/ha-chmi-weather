@@ -26,7 +26,7 @@
       "unknown": "Unexpected error while validating the station."
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "This station is already configured."
     }
   },
   "options": {
@@ -82,7 +82,7 @@
         "name": "Yesterday wind gust maximum"
       },
       "month_precipitation_chmi": {
-        "name": "CHMI month precipitation"
+        "name": "Precipitation this month"
       },
       "wind_speed": {
         "name": "Wind speed"
