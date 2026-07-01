@@ -20,7 +20,8 @@ flowchart LR
 - `config_flow.py`: UI setup, validation, and options.
 - `coordinator.py`: Shared polling with `DataUpdateCoordinator`.
 - `weather.py`: Standard Home Assistant `WeatherEntity`.
-- `sensor.py`: Diagnostic `SensorEntity` values.
+- `sensor.py`: Station measurement and technical diagnostic `SensorEntity`
+  values.
 - `diagnostics.py`: Safe troubleshooting payload for config entries.
 
 ## Data flow
@@ -33,7 +34,7 @@ flowchart LR
 3. The integration setup creates one API client and one coordinator per config
    entry.
 4. Weather and sensor entities read normalized values from coordinator memory.
-   Diagnostic sensors are filtered by station capabilities stored in the config
+   Sensor entities are filtered by station capabilities stored in the config
    entry.
 5. The coordinator keeps the last valid observation and converts fetch or parse
    errors into `UpdateFailed`.

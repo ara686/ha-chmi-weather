@@ -10,7 +10,8 @@ CHMI Weather is a Home Assistant custom integration for weather station data fro
 ČHMÚ OpenData. The integration reads measured data for one configured station,
 including current observations at the shortest interval advertised by official
 CHMI metadata and selected recent daily station summaries. It creates a standard
-`weather` entity and can expose diagnostic sensors for the raw measured values.
+`weather` entity, regular sensor entities for measured station values, and
+technical diagnostic sensors for troubleshooting timestamps.
 The project scope is limited to measured CHMI station data published into Home
 Assistant.
 
@@ -80,14 +81,19 @@ nearest stations by distance from the configured Home Assistant location or
 entered GPS coordinates, and stores the selected WSI / station ID. If Home
 Assistant has no configured location, the coordinate fields are not prefilled. It
 then validates that the OpenData endpoint is reachable and at least one usable
-observation value can be parsed. Supported diagnostic sensors are selected from
-the official OpenData `meta2` file for the station, so Home Assistant only
-exposes values the station advertises for the selected observation interval. The
+observation value can be parsed. Supported sensors are selected from the
+official OpenData `meta2` file for the station, so Home Assistant only exposes
+values the station advertises for the selected observation interval. The
 same metadata is used to select the shortest available observation interval for
 the station. Current CHMI metadata commonly advertises `10M` and `1H`; when both
 are available, the integration uses `10M`. If the station also advertises hourly
 `SRA1H`, the integration may fetch the matching `1h` file and use that value for
 the `Precipitation 1h` sensor.
+
+The `Enable technical diagnostic sensors` option controls only troubleshooting
+timestamp sensors such as `Observation time` and `Last successful poll`.
+Measured station values such as precipitation, temperature, humidity, pressure,
+and wind remain regular Home Assistant sensor entities.
 
 The update interval option is capped by the selected station observation
 interval. For example, if a station advertises `10M` data and an older config
@@ -127,7 +133,9 @@ Existing Home Assistant installations may keep the older entity ID
 `sensor.chmi_dobrichovice_last_update`; the entity unique ID is kept stable, but
 the displayed name is `Observation time`. It shows the timestamp published by
 CHMI for the latest station observation. `Last successful poll` shows when Home
-Assistant last successfully downloaded data from CHMI OpenData.
+Assistant last successfully downloaded data from CHMI OpenData. These two
+timestamp entities are categorized as Home Assistant diagnostic entities; the
+measured station values above are regular sensor entities.
 
 Existing Home Assistant installations may also keep the older entity ID
 `sensor.chmi_dobrichovice_chmi_month_precipitation`; the entity unique ID is
@@ -175,7 +183,7 @@ All entities are attached to one Home Assistant device:
   successfully; CHMI data already missed by an older polling configuration is
   not backfilled.
 - The Dobřichovice `meta2` metadata currently does not advertise pressure
-  element `P`, so the pressure diagnostic sensor is not created for this station.
+  element `P`, so the pressure sensor is not created for this station.
 - Direct `Precipitation 1h` and `Precipitation today` values are limited to rows
   available in the current and previous UTC CHMI `now/data` files. Home Assistant
   Utility Meter history continues from the states recorded by Home Assistant
@@ -209,8 +217,10 @@ example hourly, daily, weekly, and monthly rainfall helpers.
   `https://opendata.chmi.cz`.
 - If setup fails with no usable data, verify the station ID and the daily JSON
   file in a browser.
-- If sensors are missing, check the integration options and ensure diagnostic
-  sensors are enabled.
+- If measured sensors are missing, check the selected station capabilities in
+  diagnostics and verify that the station advertises the related CHMI element.
+- If `Observation time` or `Last successful poll` are missing, ensure technical
+  diagnostic sensors are enabled in the integration options.
 - Download diagnostics from Settings -> Devices & services -> CHMI Weather when
   opening an issue.
 

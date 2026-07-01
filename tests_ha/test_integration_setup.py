@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -214,6 +215,12 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     wind_gust_direction_state = hass.states.get(
         "sensor.chmi_dobrichovice_wind_gust_direction"
     )
+    observation_time_state = hass.states.get(
+        "sensor.chmi_dobrichovice_observation_time"
+    )
+    last_successful_poll_state = hass.states.get(
+        "sensor.chmi_dobrichovice_last_successful_poll"
+    )
     pressure_state = hass.states.get("sensor.chmi_dobrichovice_pressure")
 
     assert entry.runtime_data.coordinator.data is not None
@@ -300,10 +307,73 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     assert wind_speed_avg_state.state == "3.96"
     assert wind_gust_direction_state is not None
     assert wind_gust_direction_state.state == "200.0"
+    assert observation_time_state is not None
+    assert last_successful_poll_state is not None
     assert pressure_state is None
+    _assert_entity_category(hass, "sensor.chmi_dobrichovice_temperature", None)
+    _assert_entity_category(
+        hass,
+        "sensor.chmi_dobrichovice_precipitation_today",
+        None,
+    )
+    _assert_entity_category(
+        hass,
+        "sensor.chmi_dobrichovice_observation_time",
+        EntityCategory.DIAGNOSTIC,
+    )
+    _assert_entity_category(
+        hass,
+        "sensor.chmi_dobrichovice_last_successful_poll",
+        EntityCategory.DIAGNOSTIC,
+    )
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_measurement_sensors_remain_when_diagnostic_sensors_are_disabled(
+    hass: HomeAssistant,
+    monkeypatch,
+) -> None:
+    """Set up measured station sensors even when technical diagnostics are off."""
+    monkeypatch.setattr(chmi_weather, "ChmiApiClient", FakeChmiApiClient)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="CHMI Dobrichovice",
+        data={
+            CONF_STATION_ID: STATION_ID,
+            CONF_STATION_NAME: "Dobrichovice",
+            CONF_LATITUDE: 49.9335,
+            CONF_LONGITUDE: 14.2759,
+        },
+        options={
+            CONF_UPDATE_INTERVAL: 10,
+            CONF_DIAGNOSTIC_SENSORS: False,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.chmi_dobrichovice_temperature") is not None
+    assert hass.states.get("sensor.chmi_dobrichovice_precipitation_today") is not None
+    assert hass.states.get("sensor.chmi_dobrichovice_wind_speed") is not None
+    assert hass.states.get("sensor.chmi_dobrichovice_observation_time") is None
+    assert hass.states.get("sensor.chmi_dobrichovice_last_successful_poll") is None
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+def _assert_entity_category(
+    hass: HomeAssistant,
+    entity_id: str,
+    expected_category: EntityCategory | None,
+) -> None:
+    registry_entry = er.async_get(hass).async_get(entity_id)
+    assert registry_entry is not None
+    assert registry_entry.entity_category == expected_category
 
 
 def _assert_sensor_display_precision(

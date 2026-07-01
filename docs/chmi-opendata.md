@@ -137,8 +137,8 @@ entered GPS coordinates and then stores the selected WSI, station name, and
 coordinates.
 
 `meta2` contains station element metadata. The integration uses it to determine
-which diagnostic sensors should be created for the station and which current
-observation interval should be used.
+which sensors should be created for the station and which current observation
+interval should be used.
 
 Observed header:
 
@@ -183,7 +183,7 @@ interval.
 
 The sampled Dobřichovice metadata contains `TPM` but not `P`. The integration
 keeps the requested `P` pressure mapping but does not create the pressure
-diagnostic sensor unless the station advertises `P` in `meta2`.
+sensor unless the station advertises `P` in `meta2`.
 
 ## Data quality diagnostics
 
