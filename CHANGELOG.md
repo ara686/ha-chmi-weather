@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added Czech and Slovak Home Assistant translation files and translation tests
+  that keep language files aligned with the English default.
+- Removed `strings.json` and build-time translation placeholders so localization
+  follows current Home Assistant custom integration guidance.
 - Renamed the monthly precipitation sensor display name from `CHMI month
   precipitation` to `Precipitation this month` while keeping the existing entity
   unique ID stable.

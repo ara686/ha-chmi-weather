@@ -96,6 +96,19 @@ The GitHub Actions workflow runs:
 - Home Assistant beta/pre-release integration tests,
 - a daily scheduled run to surface new Home Assistant compatibility issues.
 
+## Translations
+
+Custom integration translations live in
+`custom_components/chmi_weather/translations/<language>.json`. Do not add a
+`strings.json` file for this custom integration. Home Assistant Core uses
+`strings.json` and `[%key:...]` placeholders as build-time features, but custom
+integrations are loaded directly from complete per-language translation files.
+
+Keep `translations/en.json` as the complete English default. Add future
+translations as BCP47 language-code files such as `cs.json` or `sk.json`, and
+keep their key structure identical to `en.json`. Run the translation tests after
+changing config flow labels, options flow labels, or entity translation keys.
+
 ## Branch and Release Workflow
 
 Development must not happen directly on `main`.
@@ -177,6 +190,8 @@ Before making the repository public or publishing a release:
   https://developers.home-assistant.io/docs/core/integration-quality-scale/rules/runtime-data/
 - Home Assistant config flow connection test rule:
   https://developers.home-assistant.io/docs/core/integration-quality-scale/rules/test-before-configure/
+- Home Assistant custom integration localization:
+  https://developers.home-assistant.io/docs/internationalization/custom_integration/
 - Home Assistant weather entity guide:
   https://developers.home-assistant.io/docs/core/entity/weather/
 - pytest-homeassistant-custom-component:
