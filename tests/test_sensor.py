@@ -183,6 +183,20 @@ def test_month_precipitation_chmi_sensor_native_value() -> None:
     assert entity.state_class == "measurement"
 
 
+def test_precipitation_sensors_suggest_one_decimal_display_precision() -> None:
+    precipitation_sensor_keys = {
+        "precipitation_10m",
+        "precipitation_1h",
+        "precipitation_today",
+        "yesterday_precipitation",
+        "month_precipitation_chmi",
+    }
+
+    for description in SENSOR_DESCRIPTIONS:
+        if description.key in precipitation_sensor_keys:
+            assert description.suggested_display_precision == 1
+
+
 def test_last_successful_poll_sensor_native_value() -> None:
     entity = _entity("last_successful_poll")
 

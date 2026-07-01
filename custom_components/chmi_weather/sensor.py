@@ -62,6 +62,8 @@ class ChmiSensorDescription(SensorEntityDescription, frozen_or_thawed=True):
     any_required_elements: tuple[str, ...] = ()
 
 
+PRECIPITATION_DISPLAY_PRECISION = 1
+
 SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
     ChmiSensorDescription(
         key="temperature",
@@ -132,6 +134,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="precipitation_1h",
@@ -141,6 +144,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         any_required_elements=(ELEMENT_PRECIPITATION_10M, ELEMENT_PRECIPITATION_1H),
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="precipitation_today",
@@ -151,6 +155,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="yesterday_precipitation",
@@ -160,6 +165,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="yesterday_temperature_max",
@@ -196,6 +202,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=PRECIPITATION_DISPLAY_PRECISION,
     ),
     ChmiSensorDescription(
         key="wind_speed",

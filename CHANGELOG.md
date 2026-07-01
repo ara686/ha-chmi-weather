@@ -6,6 +6,9 @@
   that keep language files aligned with the English default.
 - Removed `strings.json` and build-time translation placeholders so localization
   follows current Home Assistant custom integration guidance.
+- Set Home Assistant display precision for precipitation sensors to one decimal
+  place so rainfall values such as 5.6 mm are not shown as whole millimeters by
+  default.
 - Renamed the monthly precipitation sensor display name from `CHMI month
   precipitation` to `Precipitation this month` while keeping the existing entity
   unique ID stable.
