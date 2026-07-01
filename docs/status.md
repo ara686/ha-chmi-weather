@@ -20,8 +20,8 @@ CHMI Weather publishes measured CHMI station data into Home Assistant.
 - Data-quality details intentionally kept in diagnostics instead of regular
   disabled-by-default sensors.
 - Official CHMI recent daily summary sensors for yesterday precipitation,
-  yesterday temperature maximum/minimum, yesterday wind gust maximum, and CHMI
-  month precipitation.
+  yesterday temperature maximum/minimum, yesterday wind gust maximum, and
+  precipitation this month.
 - Weather condition mapping from station-measured SYNOP elements when
   advertised, including `ww`, `N`, `VV`, `Td`, `W1`, and `W2`.
 - Parser validation fixtures for additional station examples beyond

@@ -176,6 +176,7 @@ def test_yesterday_wind_gust_max_sensor_native_value() -> None:
 def test_month_precipitation_chmi_sensor_native_value() -> None:
     entity = _entity("month_precipitation_chmi")
 
+    assert entity.entity_description.name == "Precipitation this month"
     assert entity.native_value == 3.4
     assert entity.native_unit_of_measurement == "mm"
     assert entity.device_class == "precipitation"
