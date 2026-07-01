@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
+from homeassistant.const import EntityCategory
+
 from custom_components.chmi_weather.const import CONF_STATION_ID, CONF_STATION_NAME
 from custom_components.chmi_weather.models import ChmiObservation
 from custom_components.chmi_weather.sensor import (
@@ -80,6 +82,7 @@ def test_temperature_sensor_native_value() -> None:
     assert entity.native_unit_of_measurement == "°C"
     assert entity.device_class == "temperature"
     assert entity.state_class == "measurement"
+    assert entity._attr_entity_category is None
     assert entity.device_info["name"] == "CHMI Dobrichovice"
 
 
@@ -90,6 +93,7 @@ def test_last_update_sensor_native_value() -> None:
     assert entity.entity_description.translation_key == "observation_time"
     assert entity.device_class == "timestamp"
     assert entity.state_class is None
+    assert entity._attr_entity_category == EntityCategory.DIAGNOSTIC
 
 
 def test_precipitation_hour_sensor_native_value() -> None:
@@ -203,6 +207,17 @@ def test_last_successful_poll_sensor_native_value() -> None:
     assert entity.native_value == datetime(2026, 6, 26, 8, 51, tzinfo=UTC)
     assert entity.device_class == "timestamp"
     assert entity.state_class is None
+    assert entity._attr_entity_category == EntityCategory.DIAGNOSTIC
+
+
+def test_only_technical_sensors_are_diagnostic_entities() -> None:
+    diagnostic_sensor_keys = {"last_update", "last_successful_poll"}
+
+    for description in SENSOR_DESCRIPTIONS:
+        if description.key in diagnostic_sensor_keys:
+            assert description.entity_category == EntityCategory.DIAGNOSTIC
+        else:
+            assert description.entity_category is None
 
 
 def test_supported_sensor_descriptions_follow_station_capabilities() -> None:

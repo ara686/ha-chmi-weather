@@ -178,8 +178,8 @@ Before making the repository public or publishing a release:
 3. Add CHMI Weather from Settings -> Devices & services -> Add integration.
 4. Use the Home Assistant location or enter GPS coordinates.
 5. Select Dobřichovice or another offered nearby CHMI OpenData station.
-6. Confirm the `weather` entity and station-supported diagnostic sensors are
-   created.
+6. Confirm the `weather` entity, station-supported measurement sensors, and
+   technical diagnostic sensors are created.
 7. Check Home Assistant logs for setup or update warnings.
 
 ## Reference docs

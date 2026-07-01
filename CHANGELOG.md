@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Changed measured station sensors to regular Home Assistant sensor entities and
+  kept only technical timestamp sensors in the diagnostic entity category. The
+  diagnostic-sensors option now controls only those technical diagnostic sensors.
+
 ## 0.2.4
 
 - Added Czech and Slovak Home Assistant translation files and translation tests

@@ -9,7 +9,7 @@ CHMI Weather publishes measured CHMI station data into Home Assistant.
   metadata.
 - Async CHMI OpenData client.
 - DataUpdateCoordinator polling.
-- Weather entity and station-supported diagnostic sensors.
+- Weather entity and station-supported measurement sensors.
 - Current station values from official `now/data` files.
 - Station element capability filtering from official `meta2` metadata.
 - Shortest advertised station observation interval selection.
