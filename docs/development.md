@@ -42,11 +42,11 @@ be tested with the Home Assistant test harness in `tests_ha/`.
 Install and run against the latest checked stable Home Assistant test package:
 
 ```bash
-python -m pip install -e ".[dev,ha-stable]"
+python -m pip install ".[dev,ha-stable]"
 pytest tests_ha -o asyncio_mode=auto
 ```
 
-As of 2026-06-27, the latest checked stable Home Assistant package is
+As of 2026-07-01, the latest checked stable Home Assistant package is
 `2026.6.4`, via `pytest-homeassistant-custom-component==0.13.340`. Home
 Assistant stable testing currently requires Python 3.14.
 
@@ -77,13 +77,13 @@ Run the beta/pre-release check before deployment-oriented changes and when Home
 Assistant publishes a beta:
 
 ```bash
-python -m pip install -e ".[dev]"
-python -m pip install --upgrade --pre "pytest-homeassistant-custom-component>=0.13.341"
+python -m pip install ".[dev]"
+python -m pip install --upgrade --pre "pytest-homeassistant-custom-component>=0.13.343"
 pytest tests_ha -o asyncio_mode=auto
 ```
 
-As of 2026-06-27, that beta path installs Home Assistant `2026.7.0b1`, via
-`pytest-homeassistant-custom-component==0.13.341`. If the beta job fails because
+As of 2026-07-01, that beta path installs Home Assistant `2026.7.0b3`, via
+`pytest-homeassistant-custom-component==0.13.343`. If the beta job fails because
 of a Home Assistant API change, capture the failure and warn users before the
 next stable Home Assistant release.
 
