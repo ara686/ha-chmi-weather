@@ -35,7 +35,7 @@
         "title": "Moznosti CHMI Weather",
         "data": {
           "update_interval_minutes": "Interval aktualizacie v minutach",
-          "diagnostic_sensors": "Zapnut diagnosticke senzory"
+          "diagnostic_sensors": "Zapnut technicke diagnosticke senzory"
         }
       }
     }

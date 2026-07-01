@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.2.5
+
+- Changed measured station sensors to regular Home Assistant sensor entities and
+  kept only technical timestamp sensors in the diagnostic entity category. The
+  diagnostic-sensors option now controls only those technical diagnostic sensors.
+- Compatibility: validated with Home Assistant stable and beta test harnesses,
+  HACS repository validation, and Home Assistant hassfest validation.
+- Migration: no user action required. Existing entities keep their unique IDs;
+  Home Assistant may update their entity category after the integration reloads.
+- Breaking changes: none.
+
 ## 0.2.4
 
 - Added Czech and Slovak Home Assistant translation files and translation tests

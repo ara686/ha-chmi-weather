@@ -67,6 +67,7 @@ class ChmiSensorDescription(SensorEntityDescription, frozen_or_thawed=True):
     value_fn: Callable[[ChmiDataUpdateCoordinator, ChmiObservation], Any]
     required_elements: tuple[str, ...] = ()
     any_required_elements: tuple[str, ...] = ()
+    entity_category: EntityCategory | None = None
 
 
 PRECIPITATION_DISPLAY_PRECISION = 1
@@ -277,6 +278,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         translation_key="observation_time",
         value_fn=lambda coordinator, observation: observation.observed_at,
         device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     ChmiSensorDescription(
         key="last_successful_poll",
@@ -284,6 +286,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
         translation_key="last_successful_poll",
         value_fn=lambda coordinator, observation: coordinator.last_successful_poll,
         device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
@@ -294,14 +297,17 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up CHMI Weather sensor entities."""
-    if not entry.options.get(CONF_DIAGNOSTIC_SENSORS, DEFAULT_DIAGNOSTIC_SENSORS):
-        async_add_entities([])
-        return
-
     runtime_data = entry.runtime_data
     descriptions = supported_sensor_descriptions(
         entry.data.get(CONF_SUPPORTED_ELEMENTS)
     )
+    if not entry.options.get(CONF_DIAGNOSTIC_SENSORS, DEFAULT_DIAGNOSTIC_SENSORS):
+        descriptions = tuple(
+            description
+            for description in descriptions
+            if description.entity_category != EntityCategory.DIAGNOSTIC
+        )
+
     async_add_entities(
         [
             ChmiSensorEntity(runtime_data.coordinator, entry, description)
@@ -345,7 +351,6 @@ def supported_sensor_descriptions(
 class ChmiSensorEntity(CoordinatorEntity[ChmiDataUpdateCoordinator], SensorEntity):
     """Sensor entity backed by the shared CHMI coordinator."""
 
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_has_entity_name = True
     _attr_should_poll = False
 
@@ -360,6 +365,7 @@ class ChmiSensorEntity(CoordinatorEntity[ChmiDataUpdateCoordinator], SensorEntit
         self.entity_description = description
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data[CONF_STATION_NAME]
+        self._attr_entity_category = description.entity_category
         self._attr_name = description.name
         self._attr_unique_id = f"{self._station_id}_{description.key}"
         self._attr_translation_key = description.translation_key
