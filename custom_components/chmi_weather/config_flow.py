@@ -29,7 +29,9 @@ from .const import (
     DEFAULT_DIAGNOSTIC_SENSORS,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
     DEFAULT_STATION_SELECTION_LIMIT,
+    DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
+    MAX_UPDATE_INTERVAL_MINUTES,
 )
 from .models import ChmiNearestStation
 
@@ -95,9 +97,7 @@ class ChmiWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         title=f"CHMI {data[CONF_STATION_NAME]}",
                         data=data,
                         options={
-                            CONF_UPDATE_INTERVAL: _data_observation_interval_minutes(
-                                data
-                            ),
+                            CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_MINUTES,
                             CONF_DIAGNOSTIC_SENSORS: DEFAULT_DIAGNOSTIC_SENSORS,
                         },
                     )
@@ -129,16 +129,13 @@ class ChmiWeatherOptionsFlow(config_entries.OptionsFlow):
         user_input: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Manage integration options."""
-        observation_interval_minutes = _entry_observation_interval_minutes(
-            self._config_entry
-        )
         if user_input is not None:
             options = dict(user_input)
             options[CONF_UPDATE_INTERVAL] = max(
                 1,
                 min(
                     int(options[CONF_UPDATE_INTERVAL]),
-                    observation_interval_minutes,
+                    MAX_UPDATE_INTERVAL_MINUTES,
                 ),
             )
             return self.async_create_entry(title="", data=options)
@@ -147,8 +144,8 @@ class ChmiWeatherOptionsFlow(config_entries.OptionsFlow):
         default_update_interval = max(
             1,
             min(
-                int(options.get(CONF_UPDATE_INTERVAL, observation_interval_minutes)),
-                observation_interval_minutes,
+                int(options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES)),
+                MAX_UPDATE_INTERVAL_MINUTES,
             ),
         )
         return self.async_show_form(
@@ -160,7 +157,7 @@ class ChmiWeatherOptionsFlow(config_entries.OptionsFlow):
                         default=default_update_interval,
                     ): vol.All(
                         vol.Coerce(int),
-                        vol.Range(min=1, max=observation_interval_minutes),
+                        vol.Range(min=1, max=MAX_UPDATE_INTERVAL_MINUTES),
                     ),
                     vol.Required(
                         CONF_DIAGNOSTIC_SENSORS,
@@ -352,9 +349,3 @@ def _data_observation_interval_minutes(data: dict[str, Any]) -> int:
             )
         ),
     )
-
-
-def _entry_observation_interval_minutes(
-    config_entry: config_entries.ConfigEntry,
-) -> int:
-    return _data_observation_interval_minutes(dict(config_entry.data))

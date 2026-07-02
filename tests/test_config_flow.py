@@ -273,7 +273,7 @@ def test_config_flow_enriches_station_from_metadata(monkeypatch) -> None:
     assert data[CONF_OBSERVATION_INTERVAL_MINUTES] == 10
 
 
-def test_options_flow_limits_update_interval_to_observation_interval() -> None:
+def test_options_flow_allows_update_interval_up_to_60_minutes() -> None:
     flow = config_flow.ChmiWeatherOptionsFlow(
         SimpleNamespace(
             data={CONF_OBSERVATION_INTERVAL_MINUTES: 10},
@@ -285,7 +285,7 @@ def test_options_flow_limits_update_interval_to_observation_interval() -> None:
     marker = _schema_marker(result["data_schema"].schema, CONF_UPDATE_INTERVAL)
 
     assert result["type"] == "form"
-    assert marker.default == 10
+    assert marker.default == 60
 
     result = asyncio.run(
         flow.async_step_init(
@@ -296,5 +296,41 @@ def test_options_flow_limits_update_interval_to_observation_interval() -> None:
         )
     )
 
-    assert result["data"][CONF_UPDATE_INTERVAL] == 10
+    assert result["data"][CONF_UPDATE_INTERVAL] == 60
+    assert result["data"][CONF_DIAGNOSTIC_SENSORS] is True
+
+
+def test_options_flow_defaults_update_interval_to_10_minutes() -> None:
+    flow = config_flow.ChmiWeatherOptionsFlow(
+        SimpleNamespace(
+            data={CONF_OBSERVATION_INTERVAL_MINUTES: 60},
+            options={},
+        )
+    )
+
+    result = asyncio.run(flow.async_step_init())
+    marker = _schema_marker(result["data_schema"].schema, CONF_UPDATE_INTERVAL)
+
+    assert result["type"] == "form"
+    assert marker.default == 10
+
+
+def test_options_flow_clamps_update_interval_to_60_minutes() -> None:
+    flow = config_flow.ChmiWeatherOptionsFlow(
+        SimpleNamespace(
+            data={CONF_OBSERVATION_INTERVAL_MINUTES: 10},
+            options={},
+        )
+    )
+
+    result = asyncio.run(
+        flow.async_step_init(
+            {
+                CONF_UPDATE_INTERVAL: 99,
+                CONF_DIAGNOSTIC_SENSORS: True,
+            }
+        )
+    )
+
+    assert result["data"][CONF_UPDATE_INTERVAL] == 60
     assert result["data"][CONF_DIAGNOSTIC_SENSORS] is True

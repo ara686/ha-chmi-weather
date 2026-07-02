@@ -69,7 +69,7 @@ def test_diagnostics_include_poll_and_observation_timestamps() -> None:
     assert diagnostics["daily_summary_date"] == "2026-06-25"
     assert diagnostics["observation_interval_minutes"] == 10
     assert diagnostics["configured_update_interval_minutes"] == 60
-    assert diagnostics["effective_update_interval_minutes"] == 10
+    assert diagnostics["effective_update_interval_minutes"] == 60
     assert diagnostics["supported_elements_by_interval"] == {
         "10": ["SRA10M"],
         "60": ["SRA1H"],

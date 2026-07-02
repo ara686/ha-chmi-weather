@@ -18,8 +18,10 @@ from .const import (
     CONF_SUPPORTED_ELEMENTS_BY_INTERVAL,
     CONF_UPDATE_INTERVAL,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+    DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     ELEMENT_PRECIPITATION_1H,
+    MAX_UPDATE_INTERVAL_MINUTES,
     WEATHER_CONDITION_ELEMENTS,
 )
 from .models import ChmiDailySummary, ChmiObservation
@@ -63,14 +65,14 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
         configured_update_interval_minutes = int(
             config_entry.options.get(
                 CONF_UPDATE_INTERVAL,
-                self.observation_interval_minutes,
+                DEFAULT_UPDATE_INTERVAL_MINUTES,
             )
         )
         self.update_interval_minutes = max(
             1,
             min(
                 configured_update_interval_minutes,
-                self.observation_interval_minutes,
+                MAX_UPDATE_INTERVAL_MINUTES,
             ),
         )
 

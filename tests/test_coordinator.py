@@ -188,10 +188,21 @@ def test_coordinator_raises_update_failed_on_api_error() -> None:
         asyncio.run(coordinator._async_update_data())
 
 
-def test_coordinator_clamps_update_interval_to_observation_interval() -> None:
+def test_coordinator_allows_update_interval_up_to_60_minutes() -> None:
     coordinator = ChmiDataUpdateCoordinator(
         hass=SimpleNamespace(),
         config_entry=_config_entry(options={CONF_UPDATE_INTERVAL: 60}),
+        client=SuccessfulClient(),
+    )
+
+    assert coordinator.update_interval_minutes == 60
+    assert coordinator.kwargs["update_interval"] == timedelta(minutes=60)
+
+
+def test_coordinator_defaults_update_interval_to_10_minutes() -> None:
+    coordinator = ChmiDataUpdateCoordinator(
+        hass=SimpleNamespace(),
+        config_entry=_config_entry(options={}),
         client=SuccessfulClient(),
     )
 

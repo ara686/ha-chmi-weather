@@ -20,7 +20,9 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_SENSORS,
     DEFAULT_OBSERVATION_INTERVAL_MINUTES,
+    DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
+    MAX_UPDATE_INTERVAL_MINUTES,
 )
 
 
@@ -50,14 +52,14 @@ async def async_get_config_entry_diagnostics(
     configured_update_interval_minutes = int(
         config_entry.options.get(
             CONF_UPDATE_INTERVAL,
-            observation_interval_minutes,
+            DEFAULT_UPDATE_INTERVAL_MINUTES,
         )
     )
     effective_update_interval_minutes = max(
         1,
         min(
             configured_update_interval_minutes,
-            observation_interval_minutes,
+            MAX_UPDATE_INTERVAL_MINUTES,
         ),
     )
     if runtime_data is not None:

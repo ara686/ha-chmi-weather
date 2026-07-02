@@ -95,11 +95,12 @@ timestamp sensors such as `Observation time` and `Last successful poll`.
 Measured station values such as precipitation, temperature, humidity, pressure,
 and wind remain regular Home Assistant sensor entities.
 
-The update interval option is capped by the selected station observation
-interval. For example, if a station advertises `10M` data and an older config
-entry still has `60` minutes saved, the coordinator polls every 10 minutes. This
-affects new Home Assistant history from the next polling cycles onward; it does
-not retroactively fill missing history.
+The update interval option accepts `1` to `60` minutes and defaults to `10`
+minutes. The selected station observation interval still controls which CHMI
+OpenData file is read, but the update interval controls how often Home Assistant
+polls it. Choosing a slower interval means Home Assistant records new states less
+often. This affects new Home Assistant history from the next polling cycles
+onward; it does not retroactively fill missing history.
 
 ## Entities
 
