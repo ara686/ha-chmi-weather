@@ -193,18 +193,6 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     precipitation_today_state = hass.states.get(
         "sensor.chmi_dobrichovice_precipitation_today"
     )
-    yesterday_precipitation_state = hass.states.get(
-        "sensor.chmi_dobrichovice_yesterday_precipitation"
-    )
-    yesterday_temperature_max_state = hass.states.get(
-        "sensor.chmi_dobrichovice_yesterday_temperature_maximum"
-    )
-    yesterday_temperature_min_state = hass.states.get(
-        "sensor.chmi_dobrichovice_yesterday_temperature_minimum"
-    )
-    yesterday_wind_gust_max_state = hass.states.get(
-        "sensor.chmi_dobrichovice_yesterday_wind_gust_maximum"
-    )
     month_precipitation_state = hass.states.get(
         "sensor.chmi_dobrichovice_precipitation_this_month"
     )
@@ -271,14 +259,18 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     assert precipitation_hour_state.state == "1.2"
     assert precipitation_today_state is not None
     assert precipitation_today_state.state == "4.8"
-    assert yesterday_precipitation_state is not None
-    assert yesterday_precipitation_state.state == "0.8"
-    assert yesterday_temperature_max_state is not None
-    assert yesterday_temperature_max_state.state == "30.4"
-    assert yesterday_temperature_min_state is not None
-    assert yesterday_temperature_min_state.state == "13.2"
-    assert yesterday_wind_gust_max_state is not None
-    assert yesterday_wind_gust_max_state.state == "24.48"
+    assert hass.states.get("sensor.chmi_dobrichovice_yesterday_precipitation") is None
+    assert (
+        hass.states.get("sensor.chmi_dobrichovice_yesterday_temperature_maximum")
+        is None
+    )
+    assert (
+        hass.states.get("sensor.chmi_dobrichovice_yesterday_temperature_minimum")
+        is None
+    )
+    assert (
+        hass.states.get("sensor.chmi_dobrichovice_yesterday_wind_gust_maximum") is None
+    )
     assert month_precipitation_state is not None
     assert month_precipitation_state.state == "3.4"
     _assert_sensor_display_precision(
@@ -289,11 +281,6 @@ async def test_config_entry_sets_up_weather_and_supported_sensors(
     _assert_sensor_display_precision(
         hass,
         "sensor.chmi_dobrichovice_precipitation_today",
-        1,
-    )
-    _assert_sensor_display_precision(
-        hass,
-        "sensor.chmi_dobrichovice_yesterday_precipitation",
         1,
     )
     _assert_sensor_display_precision(

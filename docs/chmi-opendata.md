@@ -102,10 +102,10 @@ Observed header:
 STATION,ELEMENT,VTYPE,DT,VAL,FLAG,QUALITY
 ```
 
-The integration reads the selected station rows for the last completed local
-date and exposes daily summary sensors for CHMI `SRA`, `TMA`, `TMI`, and `Fmax`
-when those values are present. It also sums usable `SRA` rows from the same
-monthly daily file up to that summary date for `Precipitation this month`.
+The integration reads the selected station rows from the monthly daily file and
+sums usable `SRA` rows up to the last completed local date for `Precipitation
+this month`. If CHMI has published station rows for the month but no usable
+`SRA` rows yet, the parsed monthly precipitation total is `0.0`.
 
 ## Station metadata
 
@@ -168,10 +168,6 @@ interval.
 | Precipitation 10m | `SRA10M` |
 | Precipitation 1h | `SRA1H`, or derived from `SRA10M` |
 | Precipitation today | derived from `SRA10M` |
-| Yesterday precipitation | `SRA` from recent daily |
-| Yesterday temperature maximum | `TMA` from recent daily |
-| Yesterday temperature minimum | `TMI` from recent daily |
-| Yesterday wind gust maximum | `Fmax` from recent daily |
 | Precipitation this month | sum of `SRA` from recent daily |
 | Weather condition | `ww`, `N`, `VV`, `Td`, `W1`, `W2` from current/SYNOP data |
 | Wind speed | `F` |
