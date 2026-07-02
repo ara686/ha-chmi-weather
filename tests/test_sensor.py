@@ -114,6 +114,14 @@ def test_apparent_temperature_sensor_native_value() -> None:
     assert entity.state_class == "measurement"
 
 
+def test_temperature_extreme_sensor_display_names() -> None:
+    maximum_entity = _entity("temperature_max_10m")
+    minimum_entity = _entity("temperature_min_10m")
+
+    assert maximum_entity.entity_description.name == "Temperature Today maximum"
+    assert minimum_entity.entity_description.name == "Temperature Today minimum"
+
+
 def test_average_wind_speed_sensor_native_value() -> None:
     entity = _entity("wind_speed_avg")
 

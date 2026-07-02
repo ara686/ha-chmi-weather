@@ -46,10 +46,10 @@
         "name": "Temperature"
       },
       "temperature_max_10m": {
-        "name": "Temperature maximum 10m"
+        "name": "Temperature Today maximum"
       },
       "temperature_min_10m": {
-        "name": "Temperature minimum 10m"
+        "name": "Temperature Today minimum"
       },
       "apparent_temperature": {
         "name": "Apparent temperature"

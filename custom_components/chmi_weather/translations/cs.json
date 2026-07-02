@@ -46,10 +46,10 @@
         "name": "Teplota"
       },
       "temperature_max_10m": {
-        "name": "Teplotni maximum 10m"
+        "name": "Dnesni teplotni maximum"
       },
       "temperature_min_10m": {
-        "name": "Teplotni minimum 10m"
+        "name": "Dnesni teplotni minimum"
       },
       "apparent_temperature": {
         "name": "Pocitova teplota"
