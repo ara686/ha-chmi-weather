@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.6
+
 - Removed the `Yesterday precipitation`, `Yesterday temperature maximum`,
   `Yesterday temperature minimum`, and `Yesterday wind gust maximum` Home
   Assistant sensors. Existing entity registry entries may remain in Home
@@ -10,6 +12,17 @@
   precipitation, return `0.0` when CHMI has monthly station rows but no usable
   `SRA` rows yet, and preserve the last known same-month value during temporary
   incomplete daily updates.
+- Compatibility: validated with Home Assistant stable and beta test harnesses,
+  HACS repository validation, and Home Assistant hassfest validation. Current
+  Home Assistant stable is `2026.7.0`; the latest available
+  `pytest-homeassistant-custom-component` release still maps to `2026.7.0b3`, so
+  the beta harness covers the latest available 2026.7 test package until a
+  stable 2026.7 harness package is released.
+- Migration: remove stale `Yesterday ...` entities manually from the Home
+  Assistant entity registry if they remain after upgrading.
+- Breaking changes: the `Yesterday precipitation`, `Yesterday temperature
+  maximum`, `Yesterday temperature minimum`, and `Yesterday wind gust maximum`
+  sensors are no longer created.
 
 ## 0.2.5
 
