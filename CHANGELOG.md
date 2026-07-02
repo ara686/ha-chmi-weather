@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed `Precipitation this month` so missing or empty CHMI daily `SRA` rows are
+  not reported as `0.0`. When possible, the integration now supplements a
+  missing last completed daily `SRA` value from current interval `SRA10M` rows.
+
 ## 0.2.6
 
 - Removed the `Yesterday precipitation`, `Yesterday temperature maximum`,

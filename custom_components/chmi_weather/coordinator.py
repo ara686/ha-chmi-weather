@@ -127,7 +127,12 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
             ):
                 _copy_month_precipitation(observation, previous_observation)
         else:
-            _apply_daily_summary(observation, daily_summary, previous_observation)
+            _apply_daily_summary(
+                observation,
+                daily_summary,
+                previous_observation,
+                self.precipitation_timezone,
+            )
 
         self.last_observation = observation
         self.last_successful_poll = datetime.now(UTC)
@@ -198,6 +203,7 @@ def _apply_daily_summary(
     observation: ChmiObservation,
     daily_summary: ChmiDailySummary,
     previous_observation: ChmiObservation | None = None,
+    precipitation_timezone: tzinfo = UTC,
 ) -> None:
     """Attach recent daily summary values to a current observation."""
     observation.daily_summary_date = daily_summary.summary_date
@@ -205,7 +211,11 @@ def _apply_daily_summary(
     observation.yesterday_temperature_max = daily_summary.yesterday_temperature_max
     observation.yesterday_temperature_min = daily_summary.yesterday_temperature_min
     observation.yesterday_wind_gust_max = daily_summary.yesterday_wind_gust_max
-    observation.month_precipitation_chmi = daily_summary.month_precipitation_chmi
+    observation.month_precipitation_chmi = _month_precipitation_with_current_fallback(
+        observation,
+        daily_summary,
+        precipitation_timezone,
+    )
     if (
         observation.month_precipitation_chmi is None
         and previous_observation is not None
@@ -248,3 +258,41 @@ def _copy_month_precipitation(
 def _same_month(left: date | None, right: date) -> bool:
     """Return whether both dates are in the same calendar month."""
     return left is not None and left.year == right.year and left.month == right.month
+
+
+def _month_precipitation_with_current_fallback(
+    observation: ChmiObservation,
+    daily_summary: ChmiDailySummary,
+    precipitation_timezone: tzinfo,
+) -> float | None:
+    """Return monthly precipitation, supplementing missing daily SRA if possible."""
+    month_precipitation = daily_summary.month_precipitation_chmi
+    if daily_summary.yesterday_precipitation is not None:
+        return month_precipitation
+
+    fallback_precipitation = _precipitation_total_for_date(
+        observation,
+        daily_summary.summary_date,
+        precipitation_timezone,
+    )
+    if fallback_precipitation is None:
+        return month_precipitation
+
+    return round((month_precipitation or 0.0) + fallback_precipitation, 3)
+
+
+def _precipitation_total_for_date(
+    observation: ChmiObservation,
+    precipitation_date: date,
+    precipitation_timezone: tzinfo,
+) -> float | None:
+    """Return interval precipitation total for one Home Assistant local date."""
+    samples = [
+        sample
+        for sample in observation.precipitation_samples
+        if sample.observed_at.astimezone(precipitation_timezone).date()
+        == precipitation_date
+    ]
+    if not samples:
+        return None
+    return round(sum(sample.amount for sample in samples), 3)

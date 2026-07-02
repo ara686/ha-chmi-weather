@@ -590,7 +590,7 @@ def test_parser_reads_recent_daily_summary() -> None:
     assert summary.month_precipitation_chmi == 3.4
 
 
-def test_parser_uses_zero_month_precipitation_when_station_month_has_no_sra() -> None:
+def test_parser_does_not_assume_zero_month_precipitation_when_sra_is_missing() -> None:
     payload = {
         "data": {
             "data": {
@@ -605,6 +605,15 @@ def test_parser_uses_zero_month_precipitation_when_station_month_has_no_sra() ->
                         "",
                         0.0,
                     ],
+                    [
+                        STATION_ID,
+                        "SRA",
+                        "06:00",
+                        "2026-07-01T06:00:00Z",
+                        "",
+                        "",
+                        4.0,
+                    ],
                 ],
             },
         },
@@ -613,6 +622,33 @@ def test_parser_uses_zero_month_precipitation_when_station_month_has_no_sra() ->
     summary = parse_recent_daily_summary(payload, STATION_ID, date(2026, 7, 1))
 
     assert summary.yesterday_temperature_max == 24.8
+    assert summary.yesterday_precipitation is None
+    assert summary.month_precipitation_chmi is None
+
+
+def test_parser_reads_zero_month_precipitation_from_zero_sra() -> None:
+    payload = {
+        "data": {
+            "data": {
+                "header": "STATION,ELEMENT,VTYPE,DT,VAL,FLAG,QUALITY",
+                "values": [
+                    [
+                        STATION_ID,
+                        "SRA",
+                        "06:00",
+                        "2026-07-01T06:00:00Z",
+                        0.0,
+                        "",
+                        0.0,
+                    ],
+                ],
+            },
+        },
+    }
+
+    summary = parse_recent_daily_summary(payload, STATION_ID, date(2026, 7, 1))
+
+    assert summary.yesterday_precipitation == 0.0
     assert summary.month_precipitation_chmi == 0.0
 
 
