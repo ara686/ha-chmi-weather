@@ -149,12 +149,14 @@ matching the 0.1 mm resolution CHMI commonly publishes. If an existing entity
 still displays whole millimeters, check whether Home Assistant has a stored
 entity display-precision override for that sensor.
 
-`Precipitation this month` comes from official CHMI `recent/data/daily` station
-files. The monthly precipitation value is the sum of usable daily `SRA` rows in
-the current monthly CHMI daily file up to the last completed local date. If CHMI
-publishes station rows for the month but no usable `SRA` rows yet, the value is
-`0.0` instead of `Unknown`. During temporary incomplete daily updates, the
-integration keeps the last known value from the same month.
+`Precipitation this month` comes primarily from official CHMI
+`recent/data/daily` station files. The monthly precipitation value is the sum of
+usable daily `SRA` rows in the current monthly CHMI daily file up to the last
+completed local date. If the latest daily `SRA` value is temporarily missing but
+current interval `SRA10M` rows are available, the integration supplements the
+missing last completed day from those interval rows. During temporary incomplete
+daily updates, the integration keeps the last known value from the same month
+when it cannot calculate a replacement value.
 
 All entities are attached to one Home Assistant device:
 

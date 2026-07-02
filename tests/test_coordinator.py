@@ -17,7 +17,11 @@ from custom_components.chmi_weather.const import (
     CONF_UPDATE_INTERVAL,
 )
 from custom_components.chmi_weather.coordinator import ChmiDataUpdateCoordinator
-from custom_components.chmi_weather.models import ChmiDailySummary, ChmiObservation
+from custom_components.chmi_weather.models import (
+    ChmiDailySummary,
+    ChmiObservation,
+    ChmiPrecipitationSample,
+)
 
 
 def _observation() -> ChmiObservation:
@@ -107,6 +111,54 @@ class DailySummaryWithoutMonthlyPrecipitationClient(SuccessfulClient):
             station_id=station_id,
             summary_date=summary_date,
             yesterday_precipitation=0.0,
+            yesterday_temperature_max=29.4,
+            yesterday_temperature_min=12.2,
+            yesterday_wind_gust_max=5.8,
+            month_precipitation_chmi=None,
+        )
+
+
+class MissingDailyPrecipitationClient(SuccessfulClient):
+    """Client with current rainfall but missing daily SRA."""
+
+    async def async_get_current_observations(
+        self,
+        station_id: str,
+        *,
+        interval_minutes: int,
+        precipitation_timezone,
+        precipitation_1h_interval_minutes,
+        weather_condition_interval_minutes,
+    ):
+        observation = await super().async_get_current_observations(
+            station_id,
+            interval_minutes=interval_minutes,
+            precipitation_timezone=precipitation_timezone,
+            precipitation_1h_interval_minutes=precipitation_1h_interval_minutes,
+            weather_condition_interval_minutes=weather_condition_interval_minutes,
+        )
+        observation.precipitation_samples = (
+            ChmiPrecipitationSample(
+                datetime(2026, 7, 1, 8, 0, tzinfo=UTC),
+                10.4,
+            ),
+            ChmiPrecipitationSample(
+                datetime(2026, 7, 1, 9, 0, tzinfo=UTC),
+                16.0,
+            ),
+            ChmiPrecipitationSample(
+                datetime(2026, 7, 2, 9, 0, tzinfo=UTC),
+                2.0,
+            ),
+        )
+        return observation
+
+    async def async_get_recent_daily_summary(self, station_id: str, summary_date):
+        self.daily_calls.append((station_id, summary_date))
+        return ChmiDailySummary(
+            station_id=station_id,
+            summary_date=summary_date,
+            yesterday_precipitation=None,
             yesterday_temperature_max=29.4,
             yesterday_temperature_min=12.2,
             yesterday_wind_gust_max=5.8,
@@ -227,3 +279,18 @@ def test_coordinator_keeps_previous_month_precipitation() -> None:
     assert first_observation.month_precipitation_chmi == 3.4
     assert second_observation.yesterday_temperature_max == 29.4
     assert second_observation.month_precipitation_chmi == 3.4
+
+
+def test_coordinator_uses_current_rainfall_when_daily_sra_is_missing() -> None:
+    coordinator = ChmiDataUpdateCoordinator(
+        hass=SimpleNamespace(
+            config=SimpleNamespace(time_zone="UTC"),
+        ),
+        config_entry=_config_entry(),
+        client=MissingDailyPrecipitationClient(),
+    )
+
+    observation = asyncio.run(coordinator._async_update_data())
+
+    assert observation.yesterday_precipitation is None
+    assert observation.month_precipitation_chmi == 26.4

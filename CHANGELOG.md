@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 0.2.7
+
+- Fixed `Precipitation this month` so missing or empty CHMI daily `SRA` rows are
+  not reported as `0.0`. When possible, the integration now supplements a
+  missing last completed daily `SRA` value from current interval `SRA10M` rows.
+- Compatibility: validated with Home Assistant stable and beta test harnesses,
+  HACS repository validation, and Home Assistant hassfest validation. Current
+  Home Assistant stable is `2026.7.0`; the latest available
+  `pytest-homeassistant-custom-component` release still maps to `2026.7.0b3`, so
+  the beta harness covers the latest available 2026.7 test package until a
+  stable 2026.7 harness package is released.
+- Migration: no user action required.
+- Breaking changes: none.
+
 ## 0.2.6
 
 - Removed the `Yesterday precipitation`, `Yesterday temperature maximum`,
