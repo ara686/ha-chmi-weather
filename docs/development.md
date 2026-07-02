@@ -46,9 +46,12 @@ python -m pip install ".[dev,ha-stable]"
 pytest tests_ha -o asyncio_mode=auto
 ```
 
-As of 2026-07-01, the latest checked stable Home Assistant package is
-`2026.6.4`, via `pytest-homeassistant-custom-component==0.13.340`. Home
-Assistant stable testing currently requires Python 3.14.
+As of 2026-07-02, Home Assistant stable is `2026.7.0`, but the latest available
+`pytest-homeassistant-custom-component` package still maps to `2026.7.0b3`.
+The latest checked stable harness package remains Home Assistant `2026.6.4`, via
+`pytest-homeassistant-custom-component==0.13.340`, until a test harness package
+for stable `2026.7.0` is published. Home Assistant stable testing currently
+requires Python 3.14.
 
 `pytest-homeassistant-custom-component` is intentionally excluded from
 Dependabot version updates because newer package releases can point at Home
@@ -82,7 +85,7 @@ python -m pip install --upgrade --pre "pytest-homeassistant-custom-component>=0.
 pytest tests_ha -o asyncio_mode=auto
 ```
 
-As of 2026-07-01, that beta path installs Home Assistant `2026.7.0b3`, via
+As of 2026-07-02, that beta path installs Home Assistant `2026.7.0b3`, via
 `pytest-homeassistant-custom-component==0.13.343`. If the beta job fails because
 of a Home Assistant API change, capture the failure and warn users before the
 next stable Home Assistant release.
