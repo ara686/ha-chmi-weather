@@ -5,6 +5,8 @@
 - Renamed the temperature extrema sensors to `Temperature Today maximum` and
   `Temperature Today minimum`; the values now use the current Home Assistant
   local day from available CHMI `TMA` and `TMI` interval samples.
+- Allowed the `Update interval in minutes` option to be set from `1` to `60`
+  minutes while keeping the default at `10` minutes.
 
 ## 0.2.7
 
