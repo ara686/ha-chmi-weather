@@ -85,7 +85,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
     ),
     ChmiSensorDescription(
         key="temperature_max_10m",
-        name="Temperature maximum 10m",
+        name="Temperature Today maximum",
         translation_key="temperature_max_10m",
         value_fn=lambda coordinator, observation: observation.temperature_max_10m,
         required_elements=(ELEMENT_TEMPERATURE_MAX_10M,),
@@ -95,7 +95,7 @@ SENSOR_DESCRIPTIONS: tuple[ChmiSensorDescription, ...] = (
     ),
     ChmiSensorDescription(
         key="temperature_min_10m",
-        name="Temperature minimum 10m",
+        name="Temperature Today minimum",
         translation_key="temperature_min_10m",
         value_fn=lambda coordinator, observation: observation.temperature_min_10m,
         required_elements=(ELEMENT_TEMPERATURE_MIN_10M,),

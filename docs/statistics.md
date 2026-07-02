@@ -9,8 +9,8 @@ Use Home Assistant statistics cards or Statistics helpers for extrema and
 averages from current measured sensors:
 
 - Temperature
-- Temperature maximum 10m
-- Temperature minimum 10m
+- Temperature Today maximum
+- Temperature Today minimum
 - Apparent temperature
 - Humidity
 - Pressure, when advertised by the selected station

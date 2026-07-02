@@ -14,6 +14,14 @@ class ChmiPrecipitationSample:
     amount: float
 
 
+@dataclass(slots=True, frozen=True)
+class ChmiValueSample:
+    """One timestamped CHMI numeric value sample."""
+
+    observed_at: datetime
+    value: float
+
+
 @dataclass(slots=True)
 class ChmiObservation:
     """Normalized current observation for a CHMI weather station."""
@@ -48,6 +56,12 @@ class ChmiObservation:
     yesterday_wind_gust_max: float | None = None
     month_precipitation_chmi: float | None = None
     precipitation_samples: tuple[ChmiPrecipitationSample, ...] = field(
+        default_factory=tuple
+    )
+    temperature_max_10m_samples: tuple[ChmiValueSample, ...] = field(
+        default_factory=tuple
+    )
+    temperature_min_10m_samples: tuple[ChmiValueSample, ...] = field(
         default_factory=tuple
     )
     available_elements: tuple[str, ...] = field(default_factory=tuple)

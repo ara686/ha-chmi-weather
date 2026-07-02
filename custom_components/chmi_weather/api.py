@@ -47,6 +47,7 @@ from .models import (
     ChmiPrecipitationSample,
     ChmiStationCapabilities,
     ChmiStationMetadata,
+    ChmiValueSample,
 )
 
 DEFAULT_TIMEOUT_SECONDS = 20
@@ -122,11 +123,11 @@ class ChmiApiClient:
         if observations:
             observation = observations[0]
             if precipitation_timezone is not None:
-                observation = _with_precipitation_statistics(
+                observation = _with_current_day_statistics(
                     observation,
                     observations,
-                    precipitation_timezone=precipitation_timezone,
-                    precipitation_date=datetime.now(precipitation_timezone).date(),
+                    statistics_timezone=precipitation_timezone,
+                    statistics_date=datetime.now(precipitation_timezone).date(),
                 )
 
             optional_observations: dict[int, ChmiObservation | None] = {}
@@ -431,6 +432,8 @@ def parse_current_observations(
     selected: dict[str, tuple[datetime | None, float, str | None, float | None]] = {}
     available_elements: set[str] = set()
     precipitation_by_timestamp: dict[datetime, float] = {}
+    temperature_max_by_timestamp: dict[datetime, float] = {}
+    temperature_min_by_timestamp: dict[datetime, float] = {}
 
     for row in values:
         if not _is_row(row):
@@ -458,6 +461,10 @@ def parse_current_observations(
         quality = _as_float(_row_value(row, indices, "QUALITY", 5))
         if element_code == ELEMENT_PRECIPITATION_10M and observed_at is not None:
             precipitation_by_timestamp[observed_at] = value
+        elif element_code == ELEMENT_TEMPERATURE_MAX_10M and observed_at is not None:
+            temperature_max_by_timestamp[observed_at] = value
+        elif element_code == ELEMENT_TEMPERATURE_MIN_10M and observed_at is not None:
+            temperature_min_by_timestamp[observed_at] = value
 
         current = selected.get(element_code)
         if current is None or _is_newer_or_equal(observed_at, current[0]):
@@ -493,6 +500,8 @@ def parse_current_observations(
         precipitation_1h=precipitation_1h,
         precipitation_today=_precipitation_total(precipitation_samples),
         precipitation_samples=precipitation_samples,
+        temperature_max_10m_samples=_value_samples(temperature_max_by_timestamp),
+        temperature_min_10m_samples=_value_samples(temperature_min_by_timestamp),
         available_elements=tuple(sorted(available_elements)),
         quality_by_element=_quality_by_element(selected),
         flag_by_element=_flag_by_element(selected),
@@ -1073,6 +1082,15 @@ def _precipitation_samples(
     )
 
 
+def _value_samples(
+    values_by_timestamp: Mapping[datetime, float],
+) -> tuple[ChmiValueSample, ...]:
+    return tuple(
+        ChmiValueSample(observed_at=observed_at, value=value)
+        for observed_at, value in sorted(values_by_timestamp.items())
+    )
+
+
 def _precipitation_total(
     samples: Sequence[ChmiPrecipitationSample],
 ) -> float | None:
@@ -1099,26 +1117,55 @@ def _precipitation_last_hour(
     )
 
 
-def _with_precipitation_statistics(
+def _with_current_day_statistics(
     observation: ChmiObservation,
     observations: Sequence[ChmiObservation],
     *,
-    precipitation_timezone: tzinfo,
-    precipitation_date: date,
+    statistics_timezone: tzinfo,
+    statistics_date: date,
 ) -> ChmiObservation:
-    samples = _combined_precipitation_samples(observations)
-    local_day_samples = [
+    precipitation_samples = _combined_precipitation_samples(observations)
+    local_day_precipitation_samples = [
         sample
-        for sample in samples
-        if sample.observed_at.astimezone(precipitation_timezone).date()
-        == precipitation_date
+        for sample in precipitation_samples
+        if sample.observed_at.astimezone(statistics_timezone).date() == statistics_date
     ]
+    temperature_max_samples = _combined_value_samples(
+        observations,
+        "temperature_max_10m_samples",
+    )
+    temperature_min_samples = _combined_value_samples(
+        observations,
+        "temperature_min_10m_samples",
+    )
+    local_day_temperature_max_samples = _value_samples_for_date(
+        temperature_max_samples,
+        statistics_date,
+        statistics_timezone,
+    )
+    local_day_temperature_min_samples = _value_samples_for_date(
+        temperature_min_samples,
+        statistics_date,
+        statistics_timezone,
+    )
 
-    observation.precipitation_samples = samples
-    precipitation_1h = _precipitation_last_hour(samples)
+    observation.precipitation_samples = precipitation_samples
+    observation.temperature_max_10m_samples = temperature_max_samples
+    observation.temperature_min_10m_samples = temperature_min_samples
+
+    temperature_today_maximum = _maximum_value(local_day_temperature_max_samples)
+    if temperature_today_maximum is not None:
+        observation.temperature_max_10m = temperature_today_maximum
+    temperature_today_minimum = _minimum_value(local_day_temperature_min_samples)
+    if temperature_today_minimum is not None:
+        observation.temperature_min_10m = temperature_today_minimum
+
+    precipitation_1h = _precipitation_last_hour(precipitation_samples)
     if precipitation_1h is not None:
         observation.precipitation_1h = precipitation_1h
-    observation.precipitation_today = _precipitation_total(local_day_samples)
+    observation.precipitation_today = _precipitation_total(
+        local_day_precipitation_samples
+    )
     return observation
 
 
@@ -1135,6 +1182,46 @@ def _combined_precipitation_samples(
             key=lambda sample: sample.observed_at,
         )
     )
+
+
+def _combined_value_samples(
+    observations: Sequence[ChmiObservation],
+    sample_field: str,
+) -> tuple[ChmiValueSample, ...]:
+    return tuple(
+        sorted(
+            (
+                sample
+                for observation in observations
+                for sample in getattr(observation, sample_field)
+            ),
+            key=lambda sample: sample.observed_at,
+        )
+    )
+
+
+def _value_samples_for_date(
+    samples: Sequence[ChmiValueSample],
+    sample_date: date,
+    sample_timezone: tzinfo,
+) -> tuple[ChmiValueSample, ...]:
+    return tuple(
+        sample
+        for sample in samples
+        if sample.observed_at.astimezone(sample_timezone).date() == sample_date
+    )
+
+
+def _maximum_value(samples: Sequence[ChmiValueSample]) -> float | None:
+    if not samples:
+        return None
+    return max(sample.value for sample in samples)
+
+
+def _minimum_value(samples: Sequence[ChmiValueSample]) -> float | None:
+    if not samples:
+        return None
+    return min(sample.value for sample in samples)
 
 
 def _apply_observed_precipitation_1h(

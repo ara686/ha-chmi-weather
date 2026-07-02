@@ -144,6 +144,36 @@ def test_parser_calculates_precipitation_totals() -> None:
     ]
 
 
+def test_parser_records_temperature_extreme_samples() -> None:
+    payload = deepcopy(_fixture())
+    rows = _values(payload)
+    rows.extend(
+        [
+            [STATION_ID, "TMA", "2026-06-26T08:00:00Z", 34.1, "", 5.0],
+            [STATION_ID, "TMI", "2026-06-26T08:00:00Z", 30.6, "", 5.0],
+        ]
+    )
+
+    observation = parse_current_observations(payload, STATION_ID)
+
+    assert observation.temperature_max_10m == 33.0
+    assert observation.temperature_min_10m == 31.8
+    assert [
+        (sample.observed_at.isoformat(), sample.value)
+        for sample in observation.temperature_max_10m_samples
+    ] == [
+        ("2026-06-26T08:00:00+00:00", 34.1),
+        ("2026-06-26T08:50:00+00:00", 33.0),
+    ]
+    assert [
+        (sample.observed_at.isoformat(), sample.value)
+        for sample in observation.temperature_min_10m_samples
+    ] == [
+        ("2026-06-26T08:00:00+00:00", 30.6),
+        ("2026-06-26T08:50:00+00:00", 31.8),
+    ]
+
+
 def test_parser_reads_observed_hourly_precipitation() -> None:
     observation = parse_current_observations(_hourly_fixture(), STATION_ID)
 
@@ -244,6 +274,10 @@ def test_api_client_calculates_precipitation_today_for_local_date(
             [STATION_ID, "SRA10M", "2026-06-28T22:20:00Z", 3.7, "", 5.0],
             [STATION_ID, "SRA10M", "2026-06-28T22:30:00Z", 0.8, "", 5.0],
             [STATION_ID, "SRA10M", "2026-06-28T23:10:00Z", 0.1, "", 5.0],
+            [STATION_ID, "TMA", "2026-06-28T21:50:00Z", 35.0, "", 5.0],
+            [STATION_ID, "TMI", "2026-06-28T21:50:00Z", 10.0, "", 5.0],
+            [STATION_ID, "TMA", "2026-06-28T22:10:00Z", 33.0, "", 5.0],
+            [STATION_ID, "TMI", "2026-06-28T22:10:00Z", 20.0, "", 5.0],
         ]
     )
     current_payload = deepcopy(_fixture())
@@ -252,6 +286,8 @@ def test_api_client_calculates_precipitation_today_for_local_date(
         [
             [STATION_ID, "SRA10M", "2026-06-29T00:00:00Z", 0.0, "", 5.0],
             [STATION_ID, "SRA10M", "2026-06-29T00:10:00Z", 0.0, "", 5.0],
+            [STATION_ID, "TMA", "2026-06-29T00:10:00Z", 31.0, "", 5.0],
+            [STATION_ID, "TMI", "2026-06-29T00:10:00Z", 19.0, "", 5.0],
         ]
     )
     client = PayloadClient(
@@ -272,6 +308,8 @@ def test_api_client_calculates_precipitation_today_for_local_date(
     assert client.days == [date(2026, 6, 29), date(2026, 6, 28)]
     assert observation.precipitation_today == 4.7
     assert observation.precipitation_10m == 0.0
+    assert observation.temperature_max_10m == 33.0
+    assert observation.temperature_min_10m == 19.0
 
 
 def test_api_client_prefers_companion_hourly_precipitation(

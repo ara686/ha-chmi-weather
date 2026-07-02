@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Renamed the temperature extrema sensors to `Temperature Today maximum` and
+  `Temperature Today minimum`; the values now use the current Home Assistant
+  local day from available CHMI `TMA` and `TMI` interval samples.
+
 ## 0.2.7
 
 - Fixed `Precipitation this month` so missing or empty CHMI daily `SRA` rows are

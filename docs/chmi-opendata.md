@@ -162,8 +162,8 @@ interval.
 | Field | CHMI element |
 | --- | --- |
 | Temperature | `T` |
-| Temperature maximum 10m | `TMA` |
-| Temperature minimum 10m | `TMI` |
+| Temperature Today maximum | maximum of today's local-date `TMA` interval samples |
+| Temperature Today minimum | minimum of today's local-date `TMI` interval samples |
 | Apparent temperature | `TPM` |
 | Humidity | `H` |
 | Pressure | `P` |
