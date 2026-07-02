@@ -98,6 +98,22 @@ class DailySummaryFailingClient(SuccessfulClient):
         raise ChmiApiDataError("bad daily data")
 
 
+class DailySummaryWithoutMonthlyPrecipitationClient(SuccessfulClient):
+    """Client that returns daily values without a usable monthly rainfall total."""
+
+    async def async_get_recent_daily_summary(self, station_id: str, summary_date):
+        self.daily_calls.append((station_id, summary_date))
+        return ChmiDailySummary(
+            station_id=station_id,
+            summary_date=summary_date,
+            yesterday_precipitation=0.0,
+            yesterday_temperature_max=29.4,
+            yesterday_temperature_min=12.2,
+            yesterday_wind_gust_max=5.8,
+            month_precipitation_chmi=None,
+        )
+
+
 def _config_entry(*, options=None):
     return SimpleNamespace(
         data={
@@ -195,3 +211,19 @@ def test_coordinator_keeps_current_observation_when_daily_summary_fails() -> Non
     assert observation.temperature == 32.7
     assert observation.yesterday_precipitation is None
     assert client.daily_calls
+
+
+def test_coordinator_keeps_previous_month_precipitation() -> None:
+    coordinator = ChmiDataUpdateCoordinator(
+        hass=SimpleNamespace(),
+        config_entry=_config_entry(),
+        client=SuccessfulClient(),
+    )
+    first_observation = asyncio.run(coordinator._async_update_data())
+    coordinator.client = DailySummaryWithoutMonthlyPrecipitationClient()
+
+    second_observation = asyncio.run(coordinator._async_update_data())
+
+    assert first_observation.month_precipitation_chmi == 3.4
+    assert second_observation.yesterday_temperature_max == 29.4
+    assert second_observation.month_precipitation_chmi == 3.4

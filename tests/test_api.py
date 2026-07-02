@@ -590,6 +590,32 @@ def test_parser_reads_recent_daily_summary() -> None:
     assert summary.month_precipitation_chmi == 3.4
 
 
+def test_parser_uses_zero_month_precipitation_when_station_month_has_no_sra() -> None:
+    payload = {
+        "data": {
+            "data": {
+                "header": "STATION,ELEMENT,VTYPE,DT,VAL,FLAG,QUALITY",
+                "values": [
+                    [
+                        STATION_ID,
+                        "TMA",
+                        "20:00",
+                        "2026-07-01T20:00:00Z",
+                        24.8,
+                        "",
+                        0.0,
+                    ],
+                ],
+            },
+        },
+    }
+
+    summary = parse_recent_daily_summary(payload, STATION_ID, date(2026, 7, 1))
+
+    assert summary.yesterday_temperature_max == 24.8
+    assert summary.month_precipitation_chmi == 0.0
+
+
 def test_api_client_builds_recent_daily_url() -> None:
     client = ChmiApiClient(session=object())
 

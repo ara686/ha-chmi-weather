@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from datetime import UTC, datetime, timedelta, tzinfo
+from datetime import UTC, date, datetime, timedelta, tzinfo
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from homeassistant.config_entries import ConfigEntry
@@ -121,8 +121,13 @@ class ChmiDataUpdateCoordinator(DataUpdateCoordinator[ChmiObservation]):
                 and previous_observation.daily_summary_date == daily_summary_date
             ):
                 _copy_daily_summary(observation, previous_observation)
+            elif previous_observation is not None and _same_month(
+                previous_observation.daily_summary_date,
+                daily_summary_date,
+            ):
+                _copy_month_precipitation(observation, previous_observation)
         else:
-            _apply_daily_summary(observation, daily_summary)
+            _apply_daily_summary(observation, daily_summary, previous_observation)
 
         self.last_observation = observation
         self.last_successful_poll = datetime.now(UTC)
@@ -192,6 +197,7 @@ def _interval_with_any_supported_element(
 def _apply_daily_summary(
     observation: ChmiObservation,
     daily_summary: ChmiDailySummary,
+    previous_observation: ChmiObservation | None = None,
 ) -> None:
     """Attach recent daily summary values to a current observation."""
     observation.daily_summary_date = daily_summary.summary_date
@@ -200,6 +206,17 @@ def _apply_daily_summary(
     observation.yesterday_temperature_min = daily_summary.yesterday_temperature_min
     observation.yesterday_wind_gust_max = daily_summary.yesterday_wind_gust_max
     observation.month_precipitation_chmi = daily_summary.month_precipitation_chmi
+    if (
+        observation.month_precipitation_chmi is None
+        and previous_observation is not None
+        and _same_month(
+            previous_observation.daily_summary_date,
+            daily_summary.summary_date,
+        )
+    ):
+        observation.month_precipitation_chmi = (
+            previous_observation.month_precipitation_chmi
+        )
 
 
 def _copy_daily_summary(
@@ -217,3 +234,17 @@ def _copy_daily_summary(
     )
     observation.yesterday_wind_gust_max = previous_observation.yesterday_wind_gust_max
     observation.month_precipitation_chmi = previous_observation.month_precipitation_chmi
+
+
+def _copy_month_precipitation(
+    observation: ChmiObservation,
+    previous_observation: ChmiObservation,
+) -> None:
+    """Keep same-month precipitation total during incomplete daily updates."""
+    observation.daily_summary_date = previous_observation.daily_summary_date
+    observation.month_precipitation_chmi = previous_observation.month_precipitation_chmi
+
+
+def _same_month(left: date | None, right: date) -> bool:
+    """Return whether both dates are in the same calendar month."""
+    return left is not None and left.year == right.year and left.month == right.month
