@@ -23,10 +23,6 @@ averages from current measured sensors:
 - Precipitation 10m
 - Precipitation 1h
 - Precipitation today
-- Yesterday precipitation
-- Yesterday temperature maximum
-- Yesterday temperature minimum
-- Yesterday wind gust maximum
 - Precipitation this month
 
 Common useful characteristics are `value_max`, `value_min`, `mean`,
@@ -91,14 +87,10 @@ Use `Precipitation 1h` for direct dashboard cards or automations that need the
 latest rolling-hour rainfall. Use Utility Meter helpers based on `Precipitation
 today` for hourly, daily, weekly, monthly, or yearly calendar totals.
 
-The integration also exposes CHMI recent daily summary rainfall values when
-published by CHMI:
+The integration also exposes `Precipitation this month`, which is the sum of
+usable recent daily `SRA` rows in the CHMI monthly daily file up to the last
+completed local date.
 
-- `Yesterday precipitation`: official daily `SRA` value for the last completed
-  local date.
-- `Precipitation this month`: sum of usable recent daily `SRA` rows in the CHMI
-  monthly daily file up to that same date.
-
-Use these CHMI recent daily values when you want the upstream daily summaries.
-Use Utility Meter helpers when you want Home Assistant to maintain calendar
-totals from the history recorded by this integration.
+Use this CHMI recent daily value when you want the upstream month-to-date daily
+summary. Use Utility Meter helpers when you want Home Assistant to maintain
+calendar totals from the history recorded by this integration.

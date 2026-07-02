@@ -115,10 +115,6 @@ present in the official `meta2` file, the integration creates:
 - `sensor.chmi_dobrichovice_precipitation_10m`
 - `sensor.chmi_dobrichovice_precipitation_1h`
 - `sensor.chmi_dobrichovice_precipitation_today`
-- `sensor.chmi_dobrichovice_yesterday_precipitation`
-- `sensor.chmi_dobrichovice_yesterday_temperature_maximum`
-- `sensor.chmi_dobrichovice_yesterday_temperature_minimum`
-- `sensor.chmi_dobrichovice_yesterday_wind_gust_maximum`
 - `sensor.chmi_dobrichovice_precipitation_this_month`
 - `sensor.chmi_dobrichovice_wind_speed`
 - `sensor.chmi_dobrichovice_average_wind_speed`
@@ -153,12 +149,12 @@ matching the 0.1 mm resolution CHMI commonly publishes. If an existing entity
 still displays whole millimeters, check whether Home Assistant has a stored
 entity display-precision override for that sensor.
 
-`Yesterday precipitation`, `Yesterday temperature maximum`, `Yesterday
-temperature minimum`, `Yesterday wind gust maximum`, and `Precipitation this
-month` come from official CHMI `recent/data/daily` station files. These values
-are CHMI daily summaries for the last completed local date. The monthly
-precipitation value is the sum of usable daily `SRA` rows in the same CHMI daily
-file up to that summary date.
+`Precipitation this month` comes from official CHMI `recent/data/daily` station
+files. The monthly precipitation value is the sum of usable daily `SRA` rows in
+the current monthly CHMI daily file up to the last completed local date. If CHMI
+publishes station rows for the month but no usable `SRA` rows yet, the value is
+`0.0` instead of `Unknown`. During temporary incomplete daily updates, the
+integration keeps the last known value from the same month.
 
 All entities are attached to one Home Assistant device:
 
@@ -188,9 +184,9 @@ All entities are attached to one Home Assistant device:
   available in the current and previous UTC CHMI `now/data` files. Home Assistant
   Utility Meter history continues from the states recorded by Home Assistant
   after the integration is installed.
-- Recent daily summary sensors depend on CHMI `recent/data/daily` files. They
-  appear as unavailable if CHMI has not published a usable value for the last
-  completed local date yet.
+- `Precipitation this month` depends on CHMI `recent/data/daily` files. It
+  appears as unavailable if CHMI has not published a usable monthly daily file
+  for the station yet and there is no last known same-month value to keep.
 - CHMI data quality flags are available in integration diagnostics, not as
   normal sensor attributes.
 

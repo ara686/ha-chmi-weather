@@ -69,18 +69,6 @@
       "precipitation_today": {
         "name": "Zrazky dnes"
       },
-      "yesterday_precipitation": {
-        "name": "Zrazky vcera"
-      },
-      "yesterday_temperature_max": {
-        "name": "Vcerajsie teplotne maximum"
-      },
-      "yesterday_temperature_min": {
-        "name": "Vcerajsie teplotne minimum"
-      },
-      "yesterday_wind_gust_max": {
-        "name": "Vcerajsie maximum narazu vetra"
-      },
       "month_precipitation_chmi": {
         "name": "Zrazky tento mesiac"
       },
