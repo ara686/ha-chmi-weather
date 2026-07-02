@@ -104,8 +104,10 @@ STATION,ELEMENT,VTYPE,DT,VAL,FLAG,QUALITY
 
 The integration reads the selected station rows from the monthly daily file and
 sums usable `SRA` rows up to the last completed local date for `Precipitation
-this month`. If CHMI has published station rows for the month but no usable
-`SRA` rows yet, the parsed monthly precipitation total is `0.0`.
+this month`. A missing or empty `SRA` row is not treated as zero rainfall. When
+the latest daily `SRA` value is temporarily missing, the coordinator may
+supplement the missing day from current interval `SRA10M` rows already available
+from `now/data`.
 
 ## Station metadata
 

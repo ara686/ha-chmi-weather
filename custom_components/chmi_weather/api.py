@@ -730,7 +730,6 @@ def parse_recent_daily_summary(
     indices = _extract_header_indices(payload)
     selected: dict[str, tuple[datetime | None, float]] = {}
     month_precipitation_values: list[float] = []
-    has_station_rows_in_summary_month = False
 
     for row in values:
         if not _is_row(row):
@@ -747,13 +746,6 @@ def parse_recent_daily_summary(
             continue
 
         observed_date = observed_at.date()
-        if (
-            observed_date.year == summary_date.year
-            and observed_date.month == summary_date.month
-            and observed_date <= summary_date
-        ):
-            has_station_rows_in_summary_month = True
-
         if (
             element == ELEMENT_DAILY_PRECIPITATION
             and observed_date.year == summary_date.year
@@ -773,8 +765,6 @@ def parse_recent_daily_summary(
 
     if month_precipitation_values:
         month_precipitation_chmi = round(sum(month_precipitation_values), 3)
-    elif has_station_rows_in_summary_month:
-        month_precipitation_chmi = 0.0
     else:
         month_precipitation_chmi = None
     summary = ChmiDailySummary(
